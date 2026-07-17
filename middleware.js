@@ -6,7 +6,9 @@ export function middleware(request) {
   const isPublic =
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/login') ||
-    pathname.startsWith('/favicon');
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/manifest.json') ||
+    pathname.startsWith('/icons');
 
   if (isPublic) {
     return NextResponse.next();

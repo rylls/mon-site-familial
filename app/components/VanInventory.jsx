@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { updateInventoryLevel, addInventoryItem, deleteInventoryItem } from '../actions';
+import { updateInventoryLevel, addInventoryItem, deleteInventoryItem, bulkFillZone } from '../actions';
 import { ZONES, ZONE_LABELS } from './zones';
 import VanDiagram from './VanDiagram';
 import CommentThread from './CommentThread';
@@ -8,28 +8,36 @@ import CommentThread from './CommentThread';
 const LEVELS = ['vide', 'partiel', 'plein'];
 const LEVEL_TEXT = { vide: 'vide', partiel: 'partiel', plein: 'plein' };
 
-export default function VanInventory({ initialItems, comments, onCommentsChange, members, currentMember }) {
-  const [items, setItems] = useState(initialItems);
+export default function VanInventory({ items, onItemsChange, comments, onCommentsChange, members, currentMember }) {
   const [zone, setZone] = useState(ZONES[0].id);
   const [newName, setNewName] = useState('');
+  const [filling, setFilling] = useState(false);
 
   const zoneItems = items.filter((i) => i.zone === zone);
+  const zoneNotFull = zoneItems.filter((i) => i.level !== 'plein').length;
 
   async function setLevel(id, level) {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, level } : i)));
+    onItemsChange(items.map((i) => (i.id === id ? { ...i, level } : i)));
     await updateInventoryLevel(id, level, currentMember?.id);
   }
 
   async function handleAdd() {
     if (!newName.trim()) return;
     const updated = await addInventoryItem({ zone, name: newName.trim() });
-    setItems(updated);
+    onItemsChange(updated);
     setNewName('');
   }
 
   async function handleDelete(id) {
     const updated = await deleteInventoryItem(id);
-    setItems(updated);
+    onItemsChange(updated);
+  }
+
+  async function handleFillZone() {
+    setFilling(true);
+    const updated = await bulkFillZone(zone, currentMember?.id);
+    onItemsChange(updated);
+    setFilling(false);
   }
 
   return (
@@ -37,14 +45,25 @@ export default function VanInventory({ initialItems, comments, onCommentsChange,
       <VanDiagram selectedZone={zone} onSelectZone={setZone} />
 
       <div className="zone-tabs">
-        {ZONES.map((z) => (
-          <button key={z.id} className={`zone-tab${zone === z.id ? ' active' : ''}`} onClick={() => setZone(z.id)}>
-            {z.label}
-          </button>
-        ))}
+        {ZONES.map((z) => {
+          const count = items.filter((i) => i.zone === z.id && i.level !== 'plein').length;
+          return (
+            <button key={z.id} className={`zone-tab${zone === z.id ? ' active' : ''}`} onClick={() => setZone(z.id)}>
+              {z.label}
+              {count > 0 && <span className="zone-tab-count">{count}</span>}
+            </button>
+          );
+        })}
       </div>
 
-      <h2 className="section-title">{ZONE_LABELS[zone]}</h2>
+      <div className="section-title-row">
+        <h2 className="section-title">{ZONE_LABELS[zone]}</h2>
+        {zoneNotFull > 0 && (
+          <button className="btn small" onClick={handleFillZone} disabled={filling}>
+            {filling ? '…' : 'Tout remplir'}
+          </button>
+        )}
+      </div>
 
       <div className="add-item-row">
         <input

@@ -3,9 +3,10 @@ import Avatar from './Avatar';
 import { MiniVanIcon } from './decor/DoodleIcons';
 import { parseDate, formatRange, startOfToday } from '../lib/dates';
 
-export default function CurrentBookingBanner({ bookings, members }) {
+export default function CurrentBookingBanner({ bookings, members, inventory = [] }) {
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const today = startOfToday();
+  const notFullCount = inventory.filter((i) => i.level !== 'plein').length;
 
   const current = bookings.find((b) => parseDate(b.start_date) <= today && today <= parseDate(b.end_date));
   const next = !current && bookings
@@ -37,6 +38,11 @@ export default function CurrentBookingBanner({ bookings, members }) {
           <div className="banner-sub">{m?.name}{booking.note ? ` · ${booking.note}` : ''}</div>
         </div>
       </div>
+      {notFullCount > 0 && (
+        <div className="banner-checklist">
+          ⚠️ {notFullCount} objet{notFullCount > 1 ? 's' : ''} à recharger avant le départ
+        </div>
+      )}
     </div>
   );
 }

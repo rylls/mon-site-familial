@@ -1,12 +1,13 @@
 'use client';
-import { useState } from 'react';
-import { addBooking, deleteBooking } from '../actions';
+import { useRef, useState } from 'react';
+import { addBooking, deleteBooking, editBooking } from '../actions';
 import { parseDate, fmtDate, overlaps, formatRange, startOfToday } from '../lib/dates';
 import Avatar from './Avatar';
 import CommentThread from './CommentThread';
 import { MiniVanIcon, TicketPathIcon } from './decor/DoodleIcons';
 
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const WEEKDAY_NAMES = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
 
 export default function Calendar({ members, bookings, onBookingsChange, comments, onCommentsChange, currentMember }) {
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
@@ -15,6 +16,8 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   const [end, setEnd] = useState(null);
   const [note, setNote] = useState('');
   const [memberId, setMemberId] = useState(currentMember?.id || members[0]?.id);
+  const [editingId, setEditingId] = useState(null);
+  const sheetRef = useRef(null);
 
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const today = startOfToday();
@@ -29,7 +32,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
 
   const rangeStart = start;
   const rangeEnd = end || start;
-  const hasConflict = start && bookings.some((b) => overlaps(rangeStart, rangeEnd, parseDate(b.start_date), parseDate(b.end_date)));
+  const hasConflict = start && bookings.some((b) => b.id !== editingId && overlaps(rangeStart, rangeEnd, parseDate(b.start_date), parseDate(b.end_date)));
 
   const upcoming = bookings
     .filter((b) => parseDate(b.end_date) >= today)
@@ -47,12 +50,23 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   }
 
   function clearSelection() {
-    setStart(null); setEnd(null); setNote('');
+    setStart(null); setEnd(null); setNote(''); setEditingId(null);
+  }
+
+  function handleEdit(b) {
+    setStart(parseDate(b.start_date));
+    setEnd(parseDate(b.end_date));
+    setNote(b.note || '');
+    setMemberId(b.member_id);
+    setEditingId(b.id);
+    sheetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   async function handleConfirm() {
     if (!start || !memberId) return;
-    const updated = await addBooking({ member_id: memberId, start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note });
+    const updated = editingId
+      ? await editBooking(editingId, { start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note })
+      : await addBooking({ member_id: memberId, start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note });
     onBookingsChange(updated);
     clearSelection();
   }
@@ -60,6 +74,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   async function handleDelete(id) {
     const updated = await deleteBooking(id);
     onBookingsChange(updated);
+    if (editingId === id) clearSelection();
   }
 
   function prevMonth() {
@@ -69,6 +84,14 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   function nextMonth() {
     if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
     else setViewMonth(viewMonth + 1);
+  }
+
+  function handleCellKeyDown(e, date, disabled) {
+    if (disabled) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleDayClick(date);
+    }
   }
 
   const nights = start && end ? Math.round((rangeEnd - rangeStart) / 86400000) : 0;
@@ -119,12 +142,18 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
               (isSelecting || col === 0) && (start && end && cellDate >= rangeStart && cellDate <= rangeEnd) ? 'range-rounded-left' : '',
               (isSelectingEnd || col === 6) && (start && end && cellDate >= rangeStart && cellDate <= rangeEnd) ? 'range-rounded-right' : '',
             ].filter(Boolean).join(' ');
+            const label = `${cellDate.getDate()} ${MONTHS[cellDate.getMonth()]}${primary ? `, réservé par ${pMember?.name}` : ''}`;
             return (
               <div
                 key={i}
                 className={cls}
                 style={primary ? { background: pMember?.color || '#999' } : undefined}
                 onClick={() => handleDayClick(cellDate)}
+                role="button"
+                tabIndex={isPast ? -1 : 0}
+                aria-label={label}
+                aria-disabled={isPast}
+                onKeyDown={(e) => handleCellKeyDown(e, cellDate, isPast)}
               >
                 {primary && isBookingStart && isMultiDay && (
                   <span className="range-badge-van"><MiniVanIcon size={13} color={pMember?.color || '#999'} /></span>
@@ -140,8 +169,11 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
       </div>
 
       {start && (
-        <div className="booking-sheet">
-          <h2>{formatRange(fmtDate(start), fmtDate(rangeEnd))}{end ? ` · ${nights} nuit${nights > 1 ? 's' : ''}` : ''}</h2>
+        <div className="booking-sheet" ref={sheetRef}>
+          <h2>
+            {editingId ? 'Modifier le trajet · ' : ''}
+            {formatRange(fmtDate(start), fmtDate(rangeEnd))}{end ? ` · ${nights} nuit${nights > 1 ? 's' : ''}` : ''}
+          </h2>
           {hasConflict && <div className="conflict-warning">Attention : ces dates chevauchent déjà une réservation.</div>}
           <select className="field" value={memberId} onChange={(e) => setMemberId(e.target.value)}>
             {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -150,7 +182,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn" onClick={clearSelection}>Annuler</button>
             <button className="btn primary" style={{ flex: 1 }} onClick={handleConfirm} disabled={!end}>
-              {end ? 'Réserver le van' : 'Choisissez la date de retour'}
+              {!end ? 'Choisissez la date de retour' : editingId ? 'Enregistrer les modifications' : 'Réserver le van'}
             </button>
           </div>
         </div>
@@ -171,6 +203,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
                 {b.note && <div className="ticket-note">{b.note}</div>}
                 {conflict && <div className="ticket-conflict">Chevauche une autre réservation</div>}
               </div>
+              <button className="ticket-edit" aria-label="Modifier" onClick={() => handleEdit(b)}>✎</button>
               <button className="ticket-del" aria-label="Supprimer" onClick={() => handleDelete(b.id)}>✕</button>
             </div>
             <CommentThread
@@ -196,12 +229,12 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
           )}
           {start && end && (
             <>
-              <div className="booking-bar-label">Trajet sélectionné</div>
+              <div className="booking-bar-label">{editingId ? 'Modification en cours' : 'Trajet sélectionné'}</div>
               <div className="booking-bar-value">{formatRange(fmtDate(start), fmtDate(end))} · {nights} nuit{nights > 1 ? 's' : ''}</div>
             </>
           )}
         </div>
-        <button className="btn primary" disabled={!end} onClick={handleConfirm}>Réserver</button>
+        <button className="btn primary" disabled={!end} onClick={handleConfirm}>{editingId ? 'Enregistrer' : 'Réserver'}</button>
       </div>
     </div>
   );

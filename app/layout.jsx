@@ -3,6 +3,15 @@ import './globals.css';
 export const metadata = {
   title: 'Wouchi — le van de la famille',
   description: 'Calendrier et carnet de bord de Wouchi, le van de la famille',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/icons/icon-192.png',
+    apple: '/icons/apple-touch-icon.png',
+  },
+};
+
+export const viewport = {
+  themeColor: '#C1622D',
 };
 
 export default function RootLayout({ children }) {

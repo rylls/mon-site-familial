@@ -1,14 +1,19 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Avatar from './Avatar';
 import ProfilePicker from './ProfilePicker';
 import Calendar from './Calendar';
 import VanInventory from './VanInventory';
 import CurrentBookingBanner from './CurrentBookingBanner';
+import ActivityFeed from './ActivityFeed';
+import MemberSettings from './MemberSettings';
 import Mountains from './decor/Mountains';
 import { PineTreeIcon } from './decor/DoodleIcons';
+import { buildActivity } from '../lib/activity';
 
 const COOKIE_NAME = 'van_profile';
+const LAST_SEEN_KEY = 'wouchi_last_seen';
 
 function readCookie(name) {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -18,15 +23,34 @@ function writeCookie(name, value) {
   document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}`;
 }
 
-export default function AppShell({ members, bookings: initialBookings, inventory, comments: initialComments }) {
+function AppShellInner({ members: initialMembers, bookings: initialBookings, inventory: initialInventory, comments: initialComments }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab');
   const [profileId, setProfileId] = useState(undefined);
-  const [tab, setTab] = useState('calendrier');
+  const [tab, setTab] = useState(['calendrier', 'van', 'activite'].includes(urlTab) ? urlTab : 'calendrier');
+  const [members, setMembers] = useState(initialMembers);
   const [bookings, setBookings] = useState(initialBookings);
+  const [inventory, setInventory] = useState(initialInventory);
   const [comments, setComments] = useState(initialComments);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [hasNewActivity, setHasNewActivity] = useState(false);
 
   useEffect(() => {
     setProfileId(readCookie(COOKIE_NAME));
   }, []);
+
+  const activity = buildActivity({ bookings, comments, inventory, members });
+
+  useEffect(() => {
+    const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
+    if (!lastSeen) {
+      setHasNewActivity(activity.length > 0);
+      return;
+    }
+    setHasNewActivity(activity.some((a) => a.timestamp > lastSeen));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activity.length]);
 
   if (profileId === undefined) {
     return null;
@@ -37,6 +61,15 @@ export default function AppShell({ members, bookings: initialBookings, inventory
   function chooseProfile(id) {
     writeCookie(COOKIE_NAME, id);
     setProfileId(id);
+  }
+
+  function changeTab(next) {
+    setTab(next);
+    router.replace(`/?tab=${next}`, { scroll: false });
+    if (next === 'activite') {
+      localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
+      setHasNewActivity(false);
+    }
   }
 
   return (
@@ -55,6 +88,7 @@ export default function AppShell({ members, bookings: initialBookings, inventory
                 <span>{currentMember.name}</span>
               </div>
             )}
+            <button className="btn small" aria-label="Réglages" onClick={() => setSettingsOpen(true)}>⚙️</button>
             <button
               className="btn small"
               onClick={async () => {
@@ -69,14 +103,18 @@ export default function AppShell({ members, bookings: initialBookings, inventory
       </div>
 
       <div className="wrap">
-        <CurrentBookingBanner bookings={bookings} members={members} />
+        <CurrentBookingBanner bookings={bookings} members={members} inventory={inventory} />
 
         <div className="tabs">
-          <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => setTab('calendrier')}>
+          <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => changeTab('calendrier')}>
             <span>📅</span> Calendrier
           </button>
-          <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => setTab('van')}>
+          <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => changeTab('van')}>
             <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> Le van
+          </button>
+          <button className={`tab${tab === 'activite' ? ' active' : ''}`} onClick={() => changeTab('activite')}>
+            <span>📖</span> Activité
+            {hasNewActivity && <span className="tab-dot" />}
           </button>
         </div>
 
@@ -92,16 +130,29 @@ export default function AppShell({ members, bookings: initialBookings, inventory
         )}
         {tab === 'van' && (
           <VanInventory
-            initialItems={inventory}
+            items={inventory}
+            onItemsChange={setInventory}
             comments={comments}
             onCommentsChange={setComments}
             members={members}
             currentMember={currentMember}
           />
         )}
+        {tab === 'activite' && <ActivityFeed activity={activity} />}
       </div>
 
       {!currentMember && <ProfilePicker members={members} onChoose={chooseProfile} />}
+      {settingsOpen && (
+        <MemberSettings members={members} onMembersChange={setMembers} onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
+  );
+}
+
+export default function AppShell(props) {
+  return (
+    <Suspense fallback={null}>
+      <AppShellInner {...props} />
+    </Suspense>
   );
 }

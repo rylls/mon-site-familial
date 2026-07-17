@@ -265,6 +265,12 @@ input::placeholder{ color:var(--ink-faint); }
   color:var(--rust);
   box-shadow:0 1px 4px rgba(59,38,17,0.16);
 }
+.tab-dot{
+  width:7px; height:7px; border-radius:50%;
+  background:var(--vide);
+  display:inline-block;
+  margin-left:2px;
+}
 
 /* ---------- Current booking banner ---------- */
 .banner{
@@ -322,6 +328,14 @@ input::placeholder{ color:var(--ink-faint); }
   justify-content:center;
   gap:10px;
 }
+.banner-checklist{
+  position:relative;
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1.5px solid rgba(255,255,255,0.3);
+  font-size:13px;
+  font-weight:600;
+}
 
 /* ---------- Section titles ---------- */
 .section-title{
@@ -334,6 +348,13 @@ input::placeholder{ color:var(--ink-faint); }
   gap:8px;
   color:var(--ink);
 }
+.section-title-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.section-title-row .section-title{ margin:6px 0; }
 
 /* ---------- Calendar ---------- */
 .month-nav{
@@ -454,8 +475,13 @@ input::placeholder{ color:var(--ink-faint); }
 .ticket-dates{ font-size:13px; color:var(--ink-soft); }
 .ticket-note{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
 .ticket-conflict{ font-size:11.5px; color:#8C332A; margin-top:2px; font-weight:700; }
-.ticket-del{
+.ticket-edit{
   margin-left:auto; background:none; border:none; color:var(--ink-faint);
+  cursor:pointer; font-size:15px; padding:4px 8px;
+}
+.ticket-edit:hover{ color:var(--rust); }
+.ticket-del{
+  background:none; border:none; color:var(--ink-faint);
   cursor:pointer; font-size:16px; padding:4px 8px;
 }
 .ticket-del:hover{ color:var(--vide); }
@@ -536,6 +562,12 @@ input::placeholder{ color:var(--ink-faint); }
   box-shadow:var(--shadow-sm);
 }
 .zone-tab.active{ background:var(--rust); border-color:var(--rust); color:#fff; }
+.zone-tab-count{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:16px; height:16px; padding:0 4px; margin-left:6px;
+  border-radius:980px; background:var(--vide); color:#fff;
+  font-size:10px; font-weight:700;
+}
 
 .inv-item{
   background:var(--card); border-radius:var(--radius-sm);
@@ -570,6 +602,43 @@ input::placeholder{ color:var(--ink-faint); }
   margin-bottom:14px;
 }
 .add-item-row input{ margin-bottom:0; }
+
+/* ---------- Activity feed ---------- */
+.activity-row{
+  display:flex; align-items:flex-start; gap:10px;
+  background:var(--card); border:1.5px solid var(--line-soft);
+  border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:8px;
+}
+.activity-body{ flex:1; min-width:0; }
+.activity-text{ font-size:13.5px; color:var(--ink); line-height:1.4; }
+.activity-icon{ margin-right:4px; }
+.activity-time{ font-size:11px; color:var(--ink-faint); margin-top:2px; }
+
+/* ---------- Member settings ---------- */
+.settings-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:28px;
+  max-width:460px;
+  width:100%;
+  box-shadow:var(--shadow-lg);
+  border:1.5px dashed var(--line);
+  max-height:85vh;
+  overflow-y:auto;
+}
+.settings-card h1{ font-family:'Caveat', cursive; font-size:34px; margin:0 0 2px; color:var(--rust); }
+.settings-card p{ color:var(--ink-soft); font-size:13.5px; margin:0 0 18px; }
+.settings-row{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  padding:10px 0; border-top:1.5px solid var(--line-soft);
+}
+.settings-row input[type=text]{ flex:1; min-width:100px; margin-bottom:0; }
+.settings-colors{ display:flex; flex-wrap:wrap; gap:5px; }
+.settings-swatch{
+  width:20px; height:20px; border-radius:50%; border:2px solid transparent;
+  cursor:pointer; padding:0;
+}
+.settings-swatch.selected{ border-color:var(--ink); }
 
 /* ---------- Decorative doodles ---------- */
 .decor-corner{

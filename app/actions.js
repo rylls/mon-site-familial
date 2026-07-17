@@ -30,6 +30,15 @@ export async function deleteBooking(id) {
   return getBookings();
 }
 
+export async function editBooking(id, { start_date, end_date, note }) {
+  const { error } = await supabaseAdmin
+    .from('bookings')
+    .update({ start_date, end_date, note: note || null })
+    .eq('id', id);
+  if (error) throw error;
+  return getBookings();
+}
+
 export async function getInventory() {
   const { data, error } = await supabaseAdmin
     .from('inventory_items')
@@ -60,6 +69,24 @@ export async function deleteInventoryItem(id) {
   const { error } = await supabaseAdmin.from('inventory_items').delete().eq('id', id);
   if (error) throw error;
   return getInventory();
+}
+
+export async function bulkFillZone(zone, updated_by) {
+  const { error } = await supabaseAdmin
+    .from('inventory_items')
+    .update({ level: 'plein', updated_by, updated_at: new Date().toISOString() })
+    .eq('zone', zone);
+  if (error) throw error;
+  return getInventory();
+}
+
+export async function updateMember(id, { name, color }) {
+  const { error } = await supabaseAdmin
+    .from('members')
+    .update({ name, color })
+    .eq('id', id);
+  if (error) throw error;
+  return getMembers();
 }
 
 export async function getComments() {
