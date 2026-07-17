@@ -28,7 +28,7 @@ create table if not exists bookings (
 -- Inventaire embarqué dans le van, organisé par zone (pour le schéma en coupe)
 create table if not exists inventory_items (
   id uuid primary key default gen_random_uuid(),
-  zone text not null check (zone in ('cuisine','frigo','eau','utilitaire','gaz','eclairage','rangement','exterieur','couchages')),
+  zone text not null check (zone in ('cuisine','frigo','eau','utilitaire','gaz','eclairage','rangement','exterieur','couchages','mecanique')),
   name text not null,
   level text not null default 'plein' check (level in ('plein','partiel','vide')),
   updated_by text references members(id),
@@ -44,11 +44,11 @@ begin
   end if;
 end $$;
 
--- Autorise les nouvelles zones "couchages" et "utilitaire" si la contrainte
--- existait déjà avant leur ajout
+-- Autorise les nouvelles zones "couchages", "utilitaire" et "mecanique" si la
+-- contrainte existait déjà avant leur ajout
 alter table inventory_items drop constraint if exists inventory_items_zone_check;
 alter table inventory_items add constraint inventory_items_zone_check
-  check (zone in ('cuisine','frigo','eau','utilitaire','gaz','eclairage','rangement','exterieur','couchages'));
+  check (zone in ('cuisine','frigo','eau','utilitaire','gaz','eclairage','rangement','exterieur','couchages','mecanique'));
 
 insert into inventory_items (zone, name, level) values
   ('cuisine', 'Sel', 'plein'),
@@ -58,8 +58,8 @@ insert into inventory_items (zone, name, level) values
   ('cuisine', 'Éponges', 'plein'),
   ('cuisine', 'Allumettes', 'plein'),
   ('frigo', 'Bac à glaçons', 'plein'),
-  ('eau', 'Réservoir eau claire', 'plein'),
-  ('eau', 'Bidon d''appoint', 'plein'),
+  ('utilitaire', 'Réservoir eau claire', 'plein'),
+  ('utilitaire', 'Bidon d''appoint', 'plein'),
   ('gaz', 'Bouteille de gaz', 'plein'),
   ('eclairage', 'Ampoules de rechange', 'plein'),
   ('eclairage', 'Piles lampe de poche', 'plein'),
@@ -68,7 +68,9 @@ insert into inventory_items (zone, name, level) values
   ('rangement', 'Jerrican essence', 'plein'),
   ('rangement', 'Cales de niveau', 'plein'),
   ('couchages', 'Draps', 'plein'),
-  ('couchages', 'Couvertures', 'plein')
+  ('couchages', 'Couvertures', 'plein'),
+  ('mecanique', 'Liquide lave-glace', 'plein'),
+  ('mecanique', 'Diesel', 'plein')
 on conflict (zone, name) do nothing;
 
 -- La zone "exterieur" a été retirée de l'interface : les objets existants
@@ -76,7 +78,12 @@ on conflict (zone, name) do nothing;
 update inventory_items set zone = 'rangement' where zone = 'exterieur';
 
 -- La zone "eau" a été renommée "utilitaire" : on migre les objets existants
--- pour qu'ils restent visibles sous le nouvel identifiant.
+-- pour qu'ils restent visibles sous le nouvel identifiant. Idempotent : si un
+-- doublon existe déjà côté "utilitaire" (ex: le seed ci-dessus l'a recréé),
+-- on supprime l'ancien plutôt que de provoquer un conflit d'unicité.
+delete from inventory_items a
+  where a.zone = 'eau'
+  and exists (select 1 from inventory_items b where b.zone = 'utilitaire' and b.name = a.name);
 update inventory_items set zone = 'utilitaire' where zone = 'eau';
 
 -- Commentaires : annotations libres sur une réservation ou un objet de l'inventaire
@@ -141,6 +148,14 @@ insert into maintenance_items (name, interval_km, interval_months, last_done_km,
   ('Contrôle technique', null, 24, 71855, '2026-06-02', 'Dernier CT favorable d''après le rapport Histovec.')
 on conflict (name) do nothing;
 
+-- Petite table clé/valeur pour des réglages partagés simples (ex: date à
+-- partir de laquelle afficher le fil d'activité, après un "effacer").
+create table if not exists app_settings (
+  key text primary key,
+  value text,
+  updated_at timestamptz not null default now()
+);
+
 -- RLS activée : aucune policy publique. L'app utilise la clé "service_role"
 -- côté serveur (elle contourne toujours RLS), donc une clé anon fuitée
 -- n'aurait accès à rien.
@@ -150,3 +165,4 @@ alter table inventory_items enable row level security;
 alter table comments enable row level security;
 alter table mileage_logs enable row level security;
 alter table maintenance_items enable row level security;
+alter table app_settings enable row level security;
