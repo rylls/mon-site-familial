@@ -614,6 +614,63 @@ input::placeholder{ color:var(--ink-faint); }
 .activity-icon{ margin-right:4px; }
 .activity-time{ font-size:11px; color:var(--ink-faint); margin-top:2px; }
 
+/* ---------- Maintenance ---------- */
+.maintenance-disclaimer{
+  background:rgba(224,168,62,0.14);
+  border:1.5px solid rgba(224,168,62,0.35);
+  color:#8A6414;
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  font-size:13px;
+  line-height:1.4;
+  margin-bottom:16px;
+}
+.mileage-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:20px;
+  box-shadow:var(--shadow-sm);
+  border:1.5px solid var(--line-soft);
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.mileage-label{ font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+.mileage-value{ font-family:'Caveat', cursive; font-size:32px; font-weight:700; color:var(--rust); line-height:1.1; }
+.mileage-date{ font-size:12px; color:var(--ink-faint); }
+.mileage-add{ display:flex; gap:8px; align-items:center; }
+.mileage-add input{ margin-bottom:0; width:140px; }
+
+.maint-card{
+  background:var(--card);
+  border-radius:var(--radius-sm);
+  padding:14px 16px;
+  margin-bottom:10px;
+  box-shadow:var(--shadow-sm);
+  border-left:5px solid var(--line);
+}
+.maint-card.status-retard{ border-left-color:var(--vide); }
+.maint-card.status-bientot{ border-left-color:var(--partiel); }
+.maint-card.status-ok{ border-left-color:var(--plein); }
+.maint-card.status-inconnu{ border-left-color:var(--line); }
+.maint-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; }
+.maint-name{ font-weight:700; font-size:14.5px; }
+.maint-badge{
+  font-size:11px; font-weight:700; padding:3px 10px; border-radius:980px; color:#fff; white-space:nowrap;
+}
+.badge-retard{ background:var(--vide); }
+.badge-bientot{ background:var(--partiel); }
+.badge-ok{ background:var(--plein); }
+.badge-inconnu{ background:var(--ink-faint); }
+.maint-details{ font-size:13px; color:var(--ink-soft); line-height:1.5; }
+.maint-notes{ font-size:12px; color:var(--ink-faint); font-style:italic; margin-top:2px; }
+.maint-actions{ display:flex; gap:8px; margin-top:10px; }
+.maint-edit{ margin-top:10px; padding-top:10px; border-top:1.5px dashed var(--line-soft); }
+.maint-edit input{ font-size:13.5px; }
+
 /* ---------- Member settings ---------- */
 .settings-card{
   background:var(--card);

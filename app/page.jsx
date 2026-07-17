@@ -1,15 +1,26 @@
 import AppShell from './components/AppShell';
-import { getMembers, getBookings, getInventory, getComments } from './actions';
+import { getMembers, getBookings, getInventory, getComments, getMileageLogs, getMaintenanceItems } from './actions';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
-  const [members, bookings, inventory, comments] = await Promise.all([
+  const [members, bookings, inventory, comments, mileageLogs, maintenanceItems] = await Promise.all([
     getMembers(),
     getBookings(),
     getInventory(),
     getComments(),
+    getMileageLogs(),
+    getMaintenanceItems(),
   ]);
 
-  return <AppShell members={members} bookings={bookings} inventory={inventory} comments={comments} />;
+  return (
+    <AppShell
+      members={members}
+      bookings={bookings}
+      inventory={inventory}
+      comments={comments}
+      mileageLogs={mileageLogs}
+      maintenanceItems={maintenanceItems}
+    />
+  );
 }

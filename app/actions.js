@@ -111,3 +111,47 @@ export async function deleteComment(id) {
   if (error) throw error;
   return getComments();
 }
+
+export async function getMileageLogs() {
+  const { data, error } = await supabaseAdmin
+    .from('mileage_logs')
+    .select('*')
+    .order('recorded_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function addMileageLog({ km, recorded_by, recorded_at }) {
+  const { error } = await supabaseAdmin
+    .from('mileage_logs')
+    .insert({ km, recorded_by, recorded_at: recorded_at || new Date().toISOString().slice(0, 10) });
+  if (error) throw error;
+  return getMileageLogs();
+}
+
+export async function getMaintenanceItems() {
+  const { data, error } = await supabaseAdmin
+    .from('maintenance_items')
+    .select('*')
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMaintenanceItem(id, patch) {
+  const { error } = await supabaseAdmin
+    .from('maintenance_items')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+  return getMaintenanceItems();
+}
+
+export async function markMaintenanceDone(id, { km, date }) {
+  const { error } = await supabaseAdmin
+    .from('maintenance_items')
+    .update({ last_done_km: km, last_done_date: date, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+  return getMaintenanceItems();
+}

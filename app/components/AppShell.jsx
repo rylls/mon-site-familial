@@ -8,6 +8,7 @@ import VanInventory from './VanInventory';
 import CurrentBookingBanner from './CurrentBookingBanner';
 import ActivityFeed from './ActivityFeed';
 import MemberSettings from './MemberSettings';
+import MaintenanceView from './MaintenanceView';
 import Mountains from './decor/Mountains';
 import { PineTreeIcon } from './decor/DoodleIcons';
 import { buildActivity } from '../lib/activity';
@@ -23,16 +24,18 @@ function writeCookie(name, value) {
   document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}`;
 }
 
-function AppShellInner({ members: initialMembers, bookings: initialBookings, inventory: initialInventory, comments: initialComments }) {
+function AppShellInner({ members: initialMembers, bookings: initialBookings, inventory: initialInventory, comments: initialComments, mileageLogs: initialMileageLogs, maintenanceItems: initialMaintenanceItems }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab');
   const [profileId, setProfileId] = useState(undefined);
-  const [tab, setTab] = useState(['calendrier', 'van', 'activite'].includes(urlTab) ? urlTab : 'calendrier');
+  const [tab, setTab] = useState(['calendrier', 'van', 'activite', 'entretien'].includes(urlTab) ? urlTab : 'calendrier');
   const [members, setMembers] = useState(initialMembers);
   const [bookings, setBookings] = useState(initialBookings);
   const [inventory, setInventory] = useState(initialInventory);
   const [comments, setComments] = useState(initialComments);
+  const [mileageLogs, setMileageLogs] = useState(initialMileageLogs);
+  const [maintenanceItems, setMaintenanceItems] = useState(initialMaintenanceItems);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hasNewActivity, setHasNewActivity] = useState(false);
 
@@ -116,6 +119,9 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
             <span>📖</span> Activité
             {hasNewActivity && <span className="tab-dot" />}
           </button>
+          <button className={`tab${tab === 'entretien' ? ' active' : ''}`} onClick={() => changeTab('entretien')}>
+            <span>🔧</span> Entretien
+          </button>
         </div>
 
         {tab === 'calendrier' && (
@@ -139,6 +145,15 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
           />
         )}
         {tab === 'activite' && <ActivityFeed activity={activity} />}
+        {tab === 'entretien' && (
+          <MaintenanceView
+            mileageLogs={mileageLogs}
+            onMileageLogsChange={setMileageLogs}
+            maintenanceItems={maintenanceItems}
+            onMaintenanceItemsChange={setMaintenanceItems}
+            currentMember={currentMember}
+          />
+        )}
       </div>
 
       {!currentMember && <ProfilePicker members={members} onChoose={chooseProfile} />}
