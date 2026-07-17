@@ -7,7 +7,6 @@ export const ZONES = [
   { id: 'gaz', label: 'Liquides', x: 80.6, y: 68.4, w: 6.25, h: 11.2 },
   { id: 'eclairage', label: 'Éclairage', x: 45.6, y: 34.9, w: 15.9, h: 5.7 },
   { id: 'rangement', label: 'Rangement', x: 71.25, y: 37.8, w: 9.4, h: 19.5 },
-  { id: 'exterieur', label: 'Extérieur', x: 71.9, y: 0, w: 26.9, h: 34.4 },
 ];
 
 export const ZONE_LABELS = Object.fromEntries(ZONES.map((z) => [z.id, z.label]));

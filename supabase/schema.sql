@@ -64,11 +64,15 @@ insert into inventory_items (zone, name, level) values
   ('eclairage', 'Piles lampe de poche', 'plein'),
   ('rangement', 'Papier toilette', 'plein'),
   ('rangement', 'Sacs poubelle', 'plein'),
-  ('exterieur', 'Jerrican essence', 'plein'),
-  ('exterieur', 'Cales de niveau', 'plein'),
+  ('rangement', 'Jerrican essence', 'plein'),
+  ('rangement', 'Cales de niveau', 'plein'),
   ('couchages', 'Draps', 'plein'),
   ('couchages', 'Couvertures', 'plein')
 on conflict (zone, name) do nothing;
+
+-- La zone "exterieur" a été retirée de l'interface : les objets existants
+-- sont rapatriés dans "rangement" pour ne pas les perdre.
+update inventory_items set zone = 'rangement' where zone = 'exterieur';
 
 -- Commentaires : annotations libres sur une réservation ou un objet de l'inventaire
 create table if not exists comments (
