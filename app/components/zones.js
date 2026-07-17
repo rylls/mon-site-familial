@@ -1,11 +1,11 @@
 export const ZONES = [
-  { id: 'cuisine', label: 'Cuisine', x: 330, y: 150, w: 110, h: 60 },
-  { id: 'frigo', label: 'Frigo', x: 250, y: 150, w: 70, h: 60 },
-  { id: 'eau', label: 'Eau', x: 330, y: 215, w: 110, h: 30 },
-  { id: 'gaz', label: 'Gaz', x: 445, y: 150, w: 60, h: 60 },
-  { id: 'eclairage', label: 'Éclairage', x: 90, y: 60, w: 460, h: 26 },
-  { id: 'rangement', label: 'Rangement', x: 90, y: 150, w: 150, h: 95 },
-  { id: 'exterieur', label: 'Extérieur', x: 505, y: 90, w: 90, h: 120 },
+  { id: 'cuisine', label: 'Cuisine', x: 160, y: 130, w: 110, h: 65 },
+  { id: 'frigo', label: 'Frigo', x: 280, y: 150, w: 60, h: 45 },
+  { id: 'eau', label: 'Eau', x: 160, y: 200, w: 180, h: 22 },
+  { id: 'gaz', label: 'Gaz', x: 440, y: 200, w: 55, h: 22 },
+  { id: 'eclairage', label: 'Éclairage', x: 225, y: 18, w: 210, h: 48 },
+  { id: 'rangement', label: 'Rangement', x: 460, y: 125, w: 105, h: 70 },
+  { id: 'exterieur', label: 'Extérieur', x: 90, y: 208, w: 90, h: 40 },
 ];
 
 export const ZONE_LABELS = Object.fromEntries(ZONES.map((z) => [z.id, z.label]));

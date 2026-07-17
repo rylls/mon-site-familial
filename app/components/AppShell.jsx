@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Mountains from './Mountains';
 import Avatar from './Avatar';
 import ProfilePicker from './ProfilePicker';
 import Calendar from './Calendar';
 import VanInventory from './VanInventory';
+import CurrentBookingBanner from './CurrentBookingBanner';
 
 const COOKIE_NAME = 'van_profile';
 
@@ -16,9 +16,11 @@ function writeCookie(name, value) {
   document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}`;
 }
 
-export default function AppShell({ members, bookings, inventory }) {
+export default function AppShell({ members, bookings: initialBookings, inventory, comments: initialComments }) {
   const [profileId, setProfileId] = useState(undefined);
   const [tab, setTab] = useState('calendrier');
+  const [bookings, setBookings] = useState(initialBookings);
+  const [comments, setComments] = useState(initialComments);
 
   useEffect(() => {
     setProfileId(readCookie(COOKIE_NAME));
@@ -37,31 +39,32 @@ export default function AppShell({ members, bookings, inventory }) {
 
   return (
     <div>
-      <Mountains />
-      <div className="wrap">
-        <div className="top-header">
-          <div className="brand">
-            <h1 className="hand">Wouchi</h1>
-            <p>le van de la famille</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {currentMember && (
-              <div className="current-user" onClick={() => setProfileId(null)} title="Changer de profil">
-                <Avatar member={currentMember} />
-                <span>{currentMember.name}</span>
-              </div>
-            )}
-            <button
-              className="btn small"
-              onClick={async () => {
-                await fetch('/api/logout', { method: 'POST' });
-                window.location.href = '/login';
-              }}
-            >
-              Quitter
-            </button>
-          </div>
+      <div className="top-header">
+        <div className="brand">
+          <h1>Wouchi</h1>
+          <p>le van de la famille</p>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {currentMember && (
+            <div className="current-user" onClick={() => setProfileId(null)} title="Changer de profil">
+              <Avatar member={currentMember} />
+              <span>{currentMember.name}</span>
+            </div>
+          )}
+          <button
+            className="btn small"
+            onClick={async () => {
+              await fetch('/api/logout', { method: 'POST' });
+              window.location.href = '/login';
+            }}
+          >
+            Quitter
+          </button>
+        </div>
+      </div>
+
+      <div className="wrap">
+        <CurrentBookingBanner bookings={bookings} members={members} />
 
         <div className="tabs">
           <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => setTab('calendrier')}>Calendrier</button>
@@ -69,10 +72,23 @@ export default function AppShell({ members, bookings, inventory }) {
         </div>
 
         {tab === 'calendrier' && (
-          <Calendar members={members} initialBookings={bookings} currentMember={currentMember} />
+          <Calendar
+            members={members}
+            bookings={bookings}
+            onBookingsChange={setBookings}
+            comments={comments}
+            onCommentsChange={setComments}
+            currentMember={currentMember}
+          />
         )}
         {tab === 'van' && (
-          <VanInventory initialItems={inventory} currentMember={currentMember} />
+          <VanInventory
+            initialItems={inventory}
+            comments={comments}
+            onCommentsChange={setComments}
+            members={members}
+            currentMember={currentMember}
+          />
         )}
       </div>
 

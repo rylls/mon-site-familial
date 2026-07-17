@@ -47,3 +47,40 @@ export async function updateInventoryLevel(id, level, updated_by) {
   if (error) throw error;
   return getInventory();
 }
+
+export async function addInventoryItem({ zone, name }) {
+  const { error } = await supabaseAdmin
+    .from('inventory_items')
+    .insert({ zone, name, level: 'plein' });
+  if (error) throw error;
+  return getInventory();
+}
+
+export async function deleteInventoryItem(id) {
+  const { error } = await supabaseAdmin.from('inventory_items').delete().eq('id', id);
+  if (error) throw error;
+  return getInventory();
+}
+
+export async function getComments() {
+  const { data, error } = await supabaseAdmin
+    .from('comments')
+    .select('*')
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function addComment({ target_type, target_id, member_id, text }) {
+  const { error } = await supabaseAdmin
+    .from('comments')
+    .insert({ target_type, target_id, member_id, text });
+  if (error) throw error;
+  return getComments();
+}
+
+export async function deleteComment(id) {
+  const { error } = await supabaseAdmin.from('comments').delete().eq('id', id);
+  if (error) throw error;
+  return getComments();
+}

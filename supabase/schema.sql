@@ -32,8 +32,17 @@ create table if not exists inventory_items (
   name text not null,
   level text not null default 'plein' check (level in ('plein','partiel','vide')),
   updated_by text references members(id),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (zone, name)
 );
+
+-- Ajoute la contrainte d'unicité si la table existait déjà avant son introduction
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'inventory_items_zone_name_key') then
+    alter table inventory_items add constraint inventory_items_zone_name_key unique (zone, name);
+  end if;
+end $$;
 
 insert into inventory_items (zone, name, level) values
   ('cuisine', 'Sel', 'plein'),
@@ -52,7 +61,18 @@ insert into inventory_items (zone, name, level) values
   ('rangement', 'Sacs poubelle', 'plein'),
   ('exterieur', 'Jerrican essence', 'plein'),
   ('exterieur', 'Cales de niveau', 'plein')
-on conflict do nothing;
+on conflict (zone, name) do nothing;
+
+-- Commentaires : annotations libres sur une réservation ou un objet de l'inventaire
+create table if not exists comments (
+  id uuid primary key default gen_random_uuid(),
+  target_type text not null check (target_type in ('booking','inventory_item')),
+  target_id uuid not null,
+  member_id text not null references members(id),
+  text text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists comments_target_idx on comments (target_type, target_id);
 
 -- RLS activée : aucune policy publique. L'app utilise la clé "service_role"
 -- côté serveur (elle contourne toujours RLS), donc une clé anon fuitée
@@ -60,3 +80,4 @@ on conflict do nothing;
 alter table members enable row level security;
 alter table bookings enable row level security;
 alter table inventory_items enable row level security;
+alter table comments enable row level security;

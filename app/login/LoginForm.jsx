@@ -27,7 +27,7 @@ export default function LoginForm() {
     <div className="overlay">
       <div className="gate">
         <div className="plate">
-          <h1 className="hand">Wouchi</h1>
+          <h1>Wouchi</h1>
           <p className="sub">le van de la famille — entre le mot de passe pour accéder au site.</p>
           <form onSubmit={handleSubmit}>
             <input
