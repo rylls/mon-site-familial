@@ -120,6 +120,14 @@ function AppShellInner({
                 🔧 {maintenanceDueCount}
               </button>
             )}
+            <button
+              className="btn small"
+              aria-label="Faire le point sur le van"
+              title="Faire le point sur le van"
+              onClick={() => { haptic.tap(); setTripEndOpen(true); }}
+            >
+              📋
+            </button>
             {currentMember && (
               <div className="current-user" onClick={() => { haptic.tap(); setProfileId(null); }} title="Changer de profil">
                 <Avatar member={currentMember} />
