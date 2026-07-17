@@ -43,26 +43,28 @@ export default function AppShell({ members, bookings: initialBookings, inventory
     <div>
       <Mountains />
       <div className="top-header">
-        <div className="brand">
-          <h1>Wouchi</h1>
-          <p>le van de la famille</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {currentMember && (
-            <div className="current-user" onClick={() => setProfileId(null)} title="Changer de profil">
-              <Avatar member={currentMember} />
-              <span>{currentMember.name}</span>
-            </div>
-          )}
-          <button
-            className="btn small"
-            onClick={async () => {
-              await fetch('/api/logout', { method: 'POST' });
-              window.location.href = '/login';
-            }}
-          >
-            Quitter
-          </button>
+        <div className="top-header-inner">
+          <div className="brand">
+            <h1>Wouchi</h1>
+            <p>le van de la famille</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {currentMember && (
+              <div className="current-user" onClick={() => setProfileId(null)} title="Changer de profil">
+                <Avatar member={currentMember} />
+                <span>{currentMember.name}</span>
+              </div>
+            )}
+            <button
+              className="btn small"
+              onClick={async () => {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+              }}
+            >
+              Quitter
+            </button>
+          </div>
         </div>
       </div>
 

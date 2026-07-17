@@ -1,27 +1,20 @@
+const TILE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 130">
+  <path d="M0,100 L50,40 L100,75 L160,20 L220,80 L280,35 L340,85 L400,100 L400,130 L0,130 Z" fill="#5E84A6" fill-opacity="0.32"/>
+  <path d="M0,115 L40,85 L90,110 L150,70 L210,112 L260,80 L320,113 L370,88 L400,115 L400,130 L0,130 Z" fill="#6E8F57" fill-opacity="0.4"/>
+  <g fill="#3B2B1D" fill-opacity="0.55">
+    <path d="M40,85 L33,97 L47,97 Z"/><path d="M40,91 L31,103 L49,103 Z"/><rect x="38.5" y="103" width="3" height="5"/>
+    <path d="M150,70 L143,82 L157,82 Z"/><path d="M150,76 L141,88 L159,88 Z"/><rect x="148.5" y="88" width="3" height="5"/>
+    <path d="M260,80 L253,92 L267,92 Z"/><path d="M260,86 L251,98 L269,98 Z"/><rect x="258.5" y="98" width="3" height="5"/>
+    <path d="M370,88 L363,100 L377,100 Z"/><path d="M370,94 L361,106 L379,106 Z"/><rect x="368.5" y="106" width="3" height="5"/>
+  </g>
+</svg>`;
+
+const TILE_URL = `url("data:image/svg+xml,${encodeURIComponent(TILE)}")`;
+
 export default function Mountains() {
   return (
-    <div className="mountains-band" aria-hidden="true">
-      <svg viewBox="0 0 800 130" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="700" cy="34" r="22" fill="#E0A83E" opacity="0.5" />
-        <path
-          d="M0 108 L90 42 L150 84 L230 18 L310 96 L380 48 L460 100 L540 30 L620 88 L700 52 L800 100 L800 130 L0 130 Z"
-          fill="#5E84A6"
-          opacity="0.32"
-        />
-        <path
-          d="M0 118 L70 74 L140 106 L210 58 L300 112 L370 68 L450 114 L530 62 L610 106 L690 70 L800 114 L800 130 L0 130 Z"
-          fill="#6E8F57"
-          opacity="0.4"
-        />
-        {/* petits sapins doodle sur la crête avant */}
-        {[60, 150, 260, 420, 560, 690].map((x, i) => (
-          <g key={i} transform={`translate(${x} ${112 - (i % 2) * 6})`} opacity="0.55">
-            <path d="M0 0 L-7 12 L7 12 Z" fill="#3B2B1D" />
-            <path d="M0 6 L-9 18 L9 18 Z" fill="#3B2B1D" />
-            <rect x="-1.5" y="18" width="3" height="5" fill="#3B2B1D" />
-          </g>
-        ))}
-      </svg>
+    <div className="mountains-band" aria-hidden="true" style={{ backgroundImage: TILE_URL }}>
+      <div className="mountains-sun" />
     </div>
   );
 }
