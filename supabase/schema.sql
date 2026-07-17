@@ -28,7 +28,7 @@ create table if not exists bookings (
 -- Inventaire embarqué dans le van, organisé par zone (pour le schéma en coupe)
 create table if not exists inventory_items (
   id uuid primary key default gen_random_uuid(),
-  zone text not null check (zone in ('cuisine','frigo','eau','gaz','eclairage','rangement','exterieur','couchages')),
+  zone text not null check (zone in ('cuisine','frigo','eau','utilitaire','gaz','eclairage','rangement','exterieur','couchages')),
   name text not null,
   level text not null default 'plein' check (level in ('plein','partiel','vide')),
   updated_by text references members(id),
@@ -44,10 +44,11 @@ begin
   end if;
 end $$;
 
--- Autorise la nouvelle zone "couchages" si la contrainte existait déjà avant son ajout
+-- Autorise les nouvelles zones "couchages" et "utilitaire" si la contrainte
+-- existait déjà avant leur ajout
 alter table inventory_items drop constraint if exists inventory_items_zone_check;
 alter table inventory_items add constraint inventory_items_zone_check
-  check (zone in ('cuisine','frigo','eau','gaz','eclairage','rangement','exterieur','couchages'));
+  check (zone in ('cuisine','frigo','eau','utilitaire','gaz','eclairage','rangement','exterieur','couchages'));
 
 insert into inventory_items (zone, name, level) values
   ('cuisine', 'Sel', 'plein'),
@@ -57,8 +58,8 @@ insert into inventory_items (zone, name, level) values
   ('cuisine', 'Éponges', 'plein'),
   ('cuisine', 'Allumettes', 'plein'),
   ('frigo', 'Bac à glaçons', 'plein'),
-  ('eau', 'Réservoir eau claire', 'plein'),
-  ('eau', 'Bidon d''appoint', 'plein'),
+  ('utilitaire', 'Réservoir eau claire', 'plein'),
+  ('utilitaire', 'Bidon d''appoint', 'plein'),
   ('gaz', 'Bouteille de gaz', 'plein'),
   ('eclairage', 'Ampoules de rechange', 'plein'),
   ('eclairage', 'Piles lampe de poche', 'plein'),
@@ -73,6 +74,10 @@ on conflict (zone, name) do nothing;
 -- La zone "exterieur" a été retirée de l'interface : les objets existants
 -- sont rapatriés dans "rangement" pour ne pas les perdre.
 update inventory_items set zone = 'rangement' where zone = 'exterieur';
+
+-- La zone "eau" a été renommée "utilitaire" : on migre les objets existants
+-- pour qu'ils restent visibles sous le nouvel identifiant.
+update inventory_items set zone = 'utilitaire' where zone = 'eau';
 
 -- Commentaires : annotations libres sur une réservation ou un objet de l'inventaire
 create table if not exists comments (
