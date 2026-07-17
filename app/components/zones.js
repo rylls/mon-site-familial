@@ -1,12 +1,13 @@
 // Coordonnées en pourcentage de l'image public/images/van-cutaway.png
 export const ZONES = [
-  { id: 'cuisine', label: 'Cuisine', x: 43.5, y: 43.1, w: 21, h: 16.5 },
-  { id: 'frigo', label: 'Frigo', x: 50.5, y: 58.7, w: 11, h: 17.4 },
-  { id: 'eau', label: 'Eau', x: 43.5, y: 59.6, w: 7, h: 16.5 },
-  { id: 'gaz', label: 'Gaz', x: 88, y: 68.7, w: 11, h: 13.7 },
-  { id: 'eclairage', label: 'Éclairage', x: 45, y: 35.7, w: 17.5, h: 6.4 },
-  { id: 'rangement', label: 'Rangement', x: 64.5, y: 35.7, w: 16.5, h: 23.8 },
-  { id: 'exterieur', label: 'Extérieur', x: 70, y: 1, w: 29, h: 34 },
+  { id: 'couchages', label: 'Couchages', x: 37.5, y: 24, w: 25.6, h: 11 },
+  { id: 'cuisine', label: 'Cuisine', x: 43.75, y: 51.5, w: 22.5, h: 12.6 },
+  { id: 'frigo', label: 'Frigo', x: 51.25, y: 60.1, w: 9, h: 15.5 },
+  { id: 'eau', label: 'Eau', x: 43.75, y: 64.1, w: 7.2, h: 10.3 },
+  { id: 'gaz', label: 'Liquides', x: 80.6, y: 68.4, w: 6.25, h: 11.2 },
+  { id: 'eclairage', label: 'Éclairage', x: 45.6, y: 34.9, w: 15.9, h: 5.7 },
+  { id: 'rangement', label: 'Rangement', x: 71.25, y: 37.8, w: 9.4, h: 19.5 },
+  { id: 'exterieur', label: 'Extérieur', x: 71.9, y: 0, w: 26.9, h: 34.4 },
 ];
 
 export const ZONE_LABELS = Object.fromEntries(ZONES.map((z) => [z.id, z.label]));

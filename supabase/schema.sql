@@ -28,7 +28,7 @@ create table if not exists bookings (
 -- Inventaire embarqué dans le van, organisé par zone (pour le schéma en coupe)
 create table if not exists inventory_items (
   id uuid primary key default gen_random_uuid(),
-  zone text not null check (zone in ('cuisine','frigo','eau','gaz','eclairage','rangement','exterieur')),
+  zone text not null check (zone in ('cuisine','frigo','eau','gaz','eclairage','rangement','exterieur','couchages')),
   name text not null,
   level text not null default 'plein' check (level in ('plein','partiel','vide')),
   updated_by text references members(id),
@@ -43,6 +43,11 @@ begin
     alter table inventory_items add constraint inventory_items_zone_name_key unique (zone, name);
   end if;
 end $$;
+
+-- Autorise la nouvelle zone "couchages" si la contrainte existait déjà avant son ajout
+alter table inventory_items drop constraint if exists inventory_items_zone_check;
+alter table inventory_items add constraint inventory_items_zone_check
+  check (zone in ('cuisine','frigo','eau','gaz','eclairage','rangement','exterieur','couchages'));
 
 insert into inventory_items (zone, name, level) values
   ('cuisine', 'Sel', 'plein'),
@@ -60,7 +65,9 @@ insert into inventory_items (zone, name, level) values
   ('rangement', 'Papier toilette', 'plein'),
   ('rangement', 'Sacs poubelle', 'plein'),
   ('exterieur', 'Jerrican essence', 'plein'),
-  ('exterieur', 'Cales de niveau', 'plein')
+  ('exterieur', 'Cales de niveau', 'plein'),
+  ('couchages', 'Draps', 'plein'),
+  ('couchages', 'Couvertures', 'plein')
 on conflict (zone, name) do nothing;
 
 -- Commentaires : annotations libres sur une réservation ou un objet de l'inventaire

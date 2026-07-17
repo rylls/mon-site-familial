@@ -38,7 +38,7 @@ body{
 .hand{ font-family:'Caveat', cursive; letter-spacing:normal; }
 .doodle{ font-family:'Patrick Hand', cursive; letter-spacing:normal; }
 
-.wrap{ max-width:640px; margin:0 auto; padding:0 16px 90px; position:relative; }
+.wrap{ max-width:1100px; margin:0 auto; padding:0 24px 90px; position:relative; }
 
 button{ font-family:inherit; }
 
@@ -100,8 +100,8 @@ input::placeholder{ color:var(--ink-faint); }
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:12px 16px;
-  max-width:640px;
+  padding:12px 24px;
+  max-width:1100px;
   margin:0 auto;
   background:rgba(242,230,208,0.82);
   backdrop-filter:blur(18px) saturate(160%);
@@ -355,11 +355,11 @@ input::placeholder{ color:var(--ink-faint); }
 .days-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
 .day-cell{
   position:relative;
-  min-height:46px;
+  min-height:58px;
   display:flex; align-items:center; justify-content:center;
   border-radius:10px;
   cursor:pointer;
-  font-size:14px;
+  font-size:15px;
   font-weight:600;
   color:var(--ink);
 }
@@ -475,14 +475,8 @@ input::placeholder{ color:var(--ink-faint); }
 
 /* ---------- Van diagram (image based) ---------- */
 .van-diagram-card{
-  background:var(--card);
-  border-radius:var(--radius);
-  padding:14px;
   margin-bottom:16px;
-  box-shadow:var(--shadow-sm);
-  border:1.5px solid var(--line-soft);
   position:relative;
-  overflow:hidden;
 }
 .van-image-wrap{
   position:relative;
