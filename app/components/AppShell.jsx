@@ -5,6 +5,8 @@ import ProfilePicker from './ProfilePicker';
 import Calendar from './Calendar';
 import VanInventory from './VanInventory';
 import CurrentBookingBanner from './CurrentBookingBanner';
+import Mountains from './decor/Mountains';
+import { PineTreeIcon } from './decor/DoodleIcons';
 
 const COOKIE_NAME = 'van_profile';
 
@@ -39,6 +41,7 @@ export default function AppShell({ members, bookings: initialBookings, inventory
 
   return (
     <div>
+      <Mountains />
       <div className="top-header">
         <div className="brand">
           <h1>Wouchi</h1>
@@ -67,8 +70,12 @@ export default function AppShell({ members, bookings: initialBookings, inventory
         <CurrentBookingBanner bookings={bookings} members={members} />
 
         <div className="tabs">
-          <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => setTab('calendrier')}>Calendrier</button>
-          <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => setTab('van')}>Le van</button>
+          <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => setTab('calendrier')}>
+            <span>📅</span> Calendrier
+          </button>
+          <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => setTab('van')}>
+            <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> Le van
+          </button>
         </div>
 
         {tab === 'calendrier' && (

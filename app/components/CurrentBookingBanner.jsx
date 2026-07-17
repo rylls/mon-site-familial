@@ -1,5 +1,6 @@
 'use client';
 import Avatar from './Avatar';
+import { MiniVanIcon } from './decor/DoodleIcons';
 import { parseDate, formatRange, startOfToday } from '../lib/dates';
 
 export default function CurrentBookingBanner({ bookings, members }) {
@@ -14,7 +15,12 @@ export default function CurrentBookingBanner({ bookings, members }) {
   const booking = current || next;
 
   if (!booking) {
-    return <div className="banner banner-none">Aucun trajet en cours ou prévu. Réservez le van ci-dessous.</div>;
+    return (
+      <div className="banner banner-none">
+        <MiniVanIcon size={26} color="#8A6F4E" />
+        Aucun trajet en cours ou prévu. Réservez le van ci-dessous.
+      </div>
+    );
   }
 
   const m = memberById[booking.member_id];
@@ -22,6 +28,7 @@ export default function CurrentBookingBanner({ bookings, members }) {
 
   return (
     <div className="banner" style={{ background: `linear-gradient(135deg, ${m?.color || '#333'}, ${shade(m?.color)})` }}>
+      <div className="banner-decor"><MiniVanIcon size={90} color="#fff" /></div>
       <div className="banner-eyebrow">{current ? 'Sur la route en ce moment' : daysLeft === 0 ? 'Départ aujourd\'hui' : `Dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`}</div>
       <div className="banner-main">
         <Avatar member={m} size="lg" />

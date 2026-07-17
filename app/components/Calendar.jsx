@@ -4,6 +4,7 @@ import { addBooking, deleteBooking } from '../actions';
 import { parseDate, fmtDate, overlaps, formatRange, startOfToday } from '../lib/dates';
 import Avatar from './Avatar';
 import CommentThread from './CommentThread';
+import { MiniVanIcon, TicketPathIcon } from './decor/DoodleIcons';
 
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 
@@ -98,25 +99,40 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
             const isToday = cellDate.toDateString() === today.toDateString();
             const isPast = cellDate < today;
             const dayBookings = bookings.filter((b) => cellDate >= parseDate(b.start_date) && cellDate <= parseDate(b.end_date));
-            const isRangeStart = start && cellDate.toDateString() === start.toDateString();
-            const isRangeEnd = (end || start) && cellDate.toDateString() === (end || start).toDateString() && start;
-            const isInRange = start && end && cellDate > rangeStart && cellDate < rangeEnd;
+            const primary = dayBookings[0];
+            const pMember = primary ? memberById[primary.member_id] : null;
+            const isBookingStart = primary && cellDate.toDateString() === parseDate(primary.start_date).toDateString();
+            const isBookingEnd = primary && cellDate.toDateString() === parseDate(primary.end_date).toDateString();
+            const isMultiDay = primary && primary.start_date !== primary.end_date;
+            const isSelecting = start && cellDate.toDateString() === start.toDateString();
+            const isSelectingEnd = (end || start) && cellDate.toDateString() === (end || start).toDateString() && start;
+            const isSelectingRange = start && end && cellDate > rangeStart && cellDate < rangeEnd;
+            const col = i % 7;
             const cls = [
               'day-cell',
               isPast ? 'past' : '',
               isToday ? 'today' : '',
-              isRangeStart ? 'range-start' : '',
-              isRangeEnd ? 'range-end' : '',
-              isInRange ? 'in-range' : '',
-              dayBookings.length > 0 ? 'has-booking' : '',
+              primary ? 'range-fill' : '',
+              primary && (isBookingStart || col === 0) ? 'range-rounded-left' : '',
+              primary && (isBookingEnd || col === 6) ? 'range-rounded-right' : '',
+              (isSelecting || isSelectingEnd || isSelectingRange) ? 'selecting' : '',
+              (isSelecting || col === 0) && (start && end && cellDate >= rangeStart && cellDate <= rangeEnd) ? 'range-rounded-left' : '',
+              (isSelectingEnd || col === 6) && (start && end && cellDate >= rangeStart && cellDate <= rangeEnd) ? 'range-rounded-right' : '',
             ].filter(Boolean).join(' ');
             return (
-              <div key={i} className={cls} onClick={() => handleDayClick(cellDate)}>
+              <div
+                key={i}
+                className={cls}
+                style={primary ? { background: pMember?.color || '#999' } : undefined}
+                onClick={() => handleDayClick(cellDate)}
+              >
+                {primary && isBookingStart && isMultiDay && (
+                  <span className="range-badge-van"><MiniVanIcon size={13} color={pMember?.color || '#999'} /></span>
+                )}
+                {primary && isBookingEnd && (
+                  <span className="range-badge-avatar"><Avatar member={pMember} size="badge" /></span>
+                )}
                 <span className="day-num">{cellDate.getDate()}</span>
-                {dayBookings.slice(0, 1).map((b) => {
-                  const m = memberById[b.member_id];
-                  return <span key={b.id} className="day-dot" style={{ background: m?.color || '#999' }} />;
-                })}
               </div>
             );
           })}
@@ -140,13 +156,13 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
         </div>
       )}
 
-      <h2 className="section-title">Prochains trajets</h2>
+      <h2 className="section-title"><TicketPathIcon size={20} /> Prochains trajets</h2>
       {upcoming.length === 0 && <div className="empty-state">Aucun trajet prévu. Sélectionnez des dates ci-dessus.</div>}
       {upcoming.map((b) => {
         const m = memberById[b.member_id];
         const conflict = bookings.some((o) => o.id !== b.id && overlaps(parseDate(b.start_date), parseDate(b.end_date), parseDate(o.start_date), parseDate(o.end_date)));
         return (
-          <div key={b.id} className="ticket">
+          <div key={b.id} className="ticket" style={{ borderLeftColor: m?.color }}>
             <div className="ticket-top">
               <Avatar member={m} />
               <div style={{ flex: 1 }}>
