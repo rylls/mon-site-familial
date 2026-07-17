@@ -155,3 +155,32 @@ export async function markMaintenanceDone(id, { km, date }) {
   if (error) throw error;
   return getMaintenanceItems();
 }
+
+export async function addMaintenanceItem({ name, interval_km, interval_months, notes }) {
+  const { error } = await supabaseAdmin
+    .from('maintenance_items')
+    .insert({ name, interval_km: interval_km || null, interval_months: interval_months || null, notes: notes || null });
+  if (error) throw error;
+  return getMaintenanceItems();
+}
+
+export async function deleteMaintenanceItem(id) {
+  const { error } = await supabaseAdmin.from('maintenance_items').delete().eq('id', id);
+  if (error) throw error;
+  return getMaintenanceItems();
+}
+
+export async function getAppSetting(key) {
+  const { data, error } = await supabaseAdmin.from('app_settings').select('value').eq('key', key).maybeSingle();
+  if (error) throw error;
+  return data?.value ?? null;
+}
+
+export async function clearActivity() {
+  const now = new Date().toISOString();
+  const { error } = await supabaseAdmin
+    .from('app_settings')
+    .upsert({ key: 'activity_cleared_at', value: now, updated_at: now });
+  if (error) throw error;
+  return now;
+}

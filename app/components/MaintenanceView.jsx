@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { addMileageLog, updateMaintenanceItem, markMaintenanceDone } from '../actions';
+import { addMileageLog, updateMaintenanceItem, markMaintenanceDone, addMaintenanceItem, deleteMaintenanceItem } from '../actions';
 import { getMaintenanceStatus, STATUS_LABELS, STATUS_ORDER } from '../lib/maintenance';
+import { haptic } from '../lib/haptics';
 
 function fmtDate(d) {
   if (!d) return null;
@@ -16,6 +17,8 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
   const [newKm, setNewKm] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
+  const [addingNew, setAddingNew] = useState(false);
+  const [newItem, setNewItem] = useState({ name: '', interval_km: '', interval_months: '', notes: '' });
 
   const currentKm = mileageLogs[0]?.km ?? null;
   const currentKmDate = mileageLogs[0]?.recorded_at ?? null;
@@ -27,12 +30,14 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
   async function handleAddKm() {
     const km = parseInt(newKm, 10);
     if (!km || km <= 0) return;
+    haptic.success();
     const updated = await addMileageLog({ km, recorded_by: currentMember?.id });
     onMileageLogsChange(updated);
     setNewKm('');
   }
 
   function startEdit(item) {
+    haptic.tap();
     setEditingId(item.id);
     setDraft({
       interval_km: item.interval_km ?? '',
@@ -54,11 +59,34 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
     const updated = await updateMaintenanceItem(id, patch);
     onMaintenanceItemsChange(updated);
     setEditingId(null);
+    haptic.success();
   }
 
   async function handleMarkDone(id) {
+    haptic.success();
     const updated = await markMaintenanceDone(id, { km: currentKm, date: new Date().toISOString().slice(0, 10) });
     onMaintenanceItemsChange(updated);
+  }
+
+  async function handleDelete(id) {
+    if (!confirm('Supprimer ce poste du plan d\'entretien ?')) return;
+    haptic.delete();
+    const updated = await deleteMaintenanceItem(id);
+    onMaintenanceItemsChange(updated);
+  }
+
+  async function handleAddItem() {
+    if (!newItem.name.trim()) return;
+    haptic.success();
+    const updated = await addMaintenanceItem({
+      name: newItem.name.trim(),
+      interval_km: newItem.interval_km ? parseInt(newItem.interval_km, 10) : null,
+      interval_months: newItem.interval_months ? parseInt(newItem.interval_months, 10) : null,
+      notes: newItem.notes || null,
+    });
+    onMaintenanceItemsChange(updated);
+    setNewItem({ name: '', interval_km: '', interval_months: '', notes: '' });
+    setAddingNew(false);
   }
 
   return (
@@ -85,7 +113,26 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
         </div>
       </div>
 
-      <h2 className="section-title"><span>🔧</span> Plan d'entretien</h2>
+      <div className="section-title-row">
+        <h2 className="section-title"><span>🔧</span> Plan d'entretien</h2>
+        <button className="btn small" onClick={() => { haptic.tap(); setAddingNew((v) => !v); }}>
+          {addingNew ? 'Annuler' : '+ Ajouter un poste'}
+        </button>
+      </div>
+
+      {addingNew && (
+        <div className="maint-card maint-new">
+          <input type="text" placeholder="Nom du poste (ex: Essuie-glaces)" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} />
+          <div className="row2">
+            <input type="number" placeholder="Intervalle (km, optionnel)" value={newItem.interval_km} onChange={(e) => setNewItem({ ...newItem, interval_km: e.target.value })} />
+            <input type="number" placeholder="Intervalle (mois, optionnel)" value={newItem.interval_months} onChange={(e) => setNewItem({ ...newItem, interval_months: e.target.value })} />
+          </div>
+          <input type="text" placeholder="Notes (optionnel)" value={newItem.notes} onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })} />
+          <button className="btn primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleAddItem} disabled={!newItem.name.trim()}>
+            Ajouter au plan
+          </button>
+        </div>
+      )}
 
       {rows.map(({ item, status, dueKm, dueDate, kmLeft, daysLeft }) => (
         <div key={item.id} className={`maint-card status-${status}`}>
@@ -130,6 +177,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
             <div className="maint-actions">
               <button className="btn small" onClick={() => handleMarkDone(item.id)} disabled={currentKm == null}>Fait aujourd'hui</button>
               <button className="btn small" onClick={() => startEdit(item)}>Modifier</button>
+              <button className="btn small danger" onClick={() => handleDelete(item.id)}>Supprimer</button>
             </div>
           )}
         </div>

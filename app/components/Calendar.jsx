@@ -5,6 +5,7 @@ import { parseDate, fmtDate, overlaps, formatRange, startOfToday } from '../lib/
 import Avatar from './Avatar';
 import CommentThread from './CommentThread';
 import { MiniVanIcon, TicketPathIcon } from './decor/DoodleIcons';
+import { haptic } from '../lib/haptics';
 
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 const WEEKDAY_NAMES = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
@@ -40,6 +41,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
 
   function handleDayClick(date) {
     if (date < today) return;
+    haptic.tap();
     if (!start) { setStart(date); setEnd(null); return; }
     if (start && !end) {
       if (date < start) { setStart(date); return; }
@@ -54,6 +56,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   }
 
   function handleEdit(b) {
+    haptic.tap();
     setStart(parseDate(b.start_date));
     setEnd(parseDate(b.end_date));
     setNote(b.note || '');
@@ -67,21 +70,25 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
     const updated = editingId
       ? await editBooking(editingId, { start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note })
       : await addBooking({ member_id: memberId, start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note });
+    haptic.success();
     onBookingsChange(updated);
     clearSelection();
   }
 
   async function handleDelete(id) {
+    haptic.delete();
     const updated = await deleteBooking(id);
     onBookingsChange(updated);
     if (editingId === id) clearSelection();
   }
 
   function prevMonth() {
+    haptic.tap();
     if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
     else setViewMonth(viewMonth - 1);
   }
   function nextMonth() {
+    haptic.tap();
     if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
     else setViewMonth(viewMonth + 1);
   }

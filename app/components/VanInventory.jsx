@@ -4,6 +4,7 @@ import { updateInventoryLevel, addInventoryItem, deleteInventoryItem, bulkFillZo
 import { ZONES, ZONE_LABELS } from './zones';
 import VanDiagram from './VanDiagram';
 import CommentThread from './CommentThread';
+import { haptic } from '../lib/haptics';
 
 const LEVELS = ['vide', 'partiel', 'plein'];
 const LEVEL_TEXT = { vide: 'vide', partiel: 'partiel', plein: 'plein' };
@@ -17,23 +18,27 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
   const zoneNotFull = zoneItems.filter((i) => i.level !== 'plein').length;
 
   async function setLevel(id, level) {
+    haptic.tap();
     onItemsChange(items.map((i) => (i.id === id ? { ...i, level } : i)));
     await updateInventoryLevel(id, level, currentMember?.id);
   }
 
   async function handleAdd() {
     if (!newName.trim()) return;
+    haptic.success();
     const updated = await addInventoryItem({ zone, name: newName.trim() });
     onItemsChange(updated);
     setNewName('');
   }
 
   async function handleDelete(id) {
+    haptic.delete();
     const updated = await deleteInventoryItem(id);
     onItemsChange(updated);
   }
 
   async function handleFillZone() {
+    haptic.success();
     setFilling(true);
     const updated = await bulkFillZone(zone, currentMember?.id);
     onItemsChange(updated);
@@ -48,7 +53,7 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
         {ZONES.map((z) => {
           const count = items.filter((i) => i.zone === z.id && i.level !== 'plein').length;
           return (
-            <button key={z.id} className={`zone-tab${zone === z.id ? ' active' : ''}`} onClick={() => setZone(z.id)}>
+            <button key={z.id} className={`zone-tab${zone === z.id ? ' active' : ''}`} onClick={() => { haptic.tap(); setZone(z.id); }}>
               {z.label}
               {count > 0 && <span className="zone-tab-count">{count}</span>}
             </button>

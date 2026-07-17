@@ -152,6 +152,13 @@ input::placeholder{ color:var(--ink-faint); }
 }
 .current-user span{ font-weight:650; font-size:13.5px; }
 
+.header-maint-pill{
+  display:inline-flex; align-items:center; gap:4px;
+  background:rgba(192,69,58,0.12); border:1.5px solid rgba(192,69,58,0.35);
+  color:#8C332A; font-weight:700; font-size:12.5px;
+  padding:6px 11px; border-radius:980px; cursor:pointer;
+}
+
 /* ---------- Avatars ---------- */
 .avatar{
   width:36px; height:36px;
@@ -282,13 +289,47 @@ input::placeholder{ color:var(--ink-faint); }
   overflow:hidden;
   box-shadow:var(--shadow-lg);
 }
-.banner-decor{
-  position:absolute;
-  right:-10px;
-  bottom:-14px;
-  opacity:.28;
-  pointer-events:none;
+.banner-van-strip{
+  display:flex;
+  justify-content:center;
+  margin:-22px -22px 12px;
+  padding:14px 22px 8px;
+  background:rgba(0,0,0,0.08);
 }
+.banner-van-img{
+  height:92px;
+  width:auto;
+  max-width:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,0.25));
+}
+.banner-none-van{
+  height:32px;
+  width:auto;
+  opacity:.6;
+}
+.banner-nav{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:10px;
+  position:relative;
+}
+.banner-nav-btn{
+  background:rgba(255,255,255,0.18);
+  border:none;
+  color:#fff;
+  width:26px; height:26px;
+  border-radius:50%;
+  font-size:15px;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.banner-nav-btn:disabled{ opacity:.3; cursor:default; }
+.banner-dots{ display:flex; gap:5px; }
+.banner-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.35); }
+.banner-dot.active{ background:#fff; }
 .banner-eyebrow{
   font-size:12px;
   font-weight:700;
@@ -297,10 +338,12 @@ input::placeholder{ color:var(--ink-faint); }
   opacity:.9;
   margin-bottom:6px;
   position:relative;
+  text-align:center;
 }
 .banner-main{
   display:flex;
   align-items:center;
+  justify-content:center;
   gap:14px;
   position:relative;
 }
@@ -335,7 +378,23 @@ input::placeholder{ color:var(--ink-faint); }
   border-top:1.5px solid rgba(255,255,255,0.3);
   font-size:13px;
   font-weight:600;
+  text-align:center;
 }
+.banner-trip-end{
+  display:block;
+  width:100%;
+  margin-top:14px;
+  padding:11px;
+  background:rgba(255,255,255,0.95);
+  color:var(--ink);
+  border:none;
+  border-radius:980px;
+  font-weight:700;
+  font-size:13.5px;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+.banner-trip-end:active{ transform:scale(0.98); }
 
 /* ---------- Section titles ---------- */
 .section-title{
@@ -670,6 +729,8 @@ input::placeholder{ color:var(--ink-faint); }
 .maint-actions{ display:flex; gap:8px; margin-top:10px; }
 .maint-edit{ margin-top:10px; padding-top:10px; border-top:1.5px dashed var(--line-soft); }
 .maint-edit input{ font-size:13.5px; }
+.maint-new{ border-left-color:var(--sage); }
+.maint-new input{ font-size:13.5px; }
 
 /* ---------- Member settings ---------- */
 .settings-card{
@@ -696,6 +757,55 @@ input::placeholder{ color:var(--ink-faint); }
   cursor:pointer; padding:0;
 }
 .settings-swatch.selected{ border-color:var(--ink); }
+
+/* ---------- Trip end quick check-in ---------- */
+.tripend-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:26px;
+  max-width:480px;
+  width:100%;
+  box-shadow:var(--shadow-lg);
+  border:1.5px dashed var(--line);
+  max-height:85vh;
+  overflow-y:auto;
+}
+.tripend-card h1{ font-family:'Caveat', cursive; font-size:34px; margin:0 0 2px; color:var(--rust); }
+.tripend-card p{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+.tripend-zone{
+  border-top:1.5px solid var(--line-soft);
+  padding:8px 0;
+}
+.tripend-zone-header{
+  display:flex; align-items:center; justify-content:space-between;
+  width:100%; background:none; border:none; cursor:pointer;
+  font-weight:700; font-size:14px; color:var(--ink); padding:4px 0;
+}
+.tripend-chevron{ color:var(--ink-faint); font-size:12px; }
+.tripend-item{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:7px 0 7px 8px; gap:10px;
+}
+.tripend-item-name{ font-size:13.5px; flex:1; }
+
+/* ---------- Side page doodles ---------- */
+.side-doodles{ display:none; }
+@media (min-width:1340px){
+  .side-doodles{ display:block; }
+  .side-doodles-col{
+    position:fixed;
+    top:140px;
+    display:flex;
+    flex-direction:column;
+    gap:120px;
+    pointer-events:none;
+    z-index:1;
+    opacity:.28;
+  }
+  .side-doodles-col.left{ left:36px; }
+  .side-doodles-col.right{ right:36px; }
+  .side-doodle-item{ color:var(--ink); }
+}
 
 /* ---------- Decorative doodles ---------- */
 .decor-corner{

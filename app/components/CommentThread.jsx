@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { addComment, deleteComment } from '../actions';
 import Avatar from './Avatar';
+import { haptic } from '../lib/haptics';
 
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -22,19 +23,21 @@ export default function CommentThread({ targetType, targetId, comments, members,
 
   async function handleAdd() {
     if (!text.trim() || !currentMember) return;
+    haptic.success();
     const updated = await addComment({ target_type: targetType, target_id: targetId, member_id: currentMember.id, text: text.trim() });
     onCommentsChange(updated);
     setText('');
   }
 
   async function handleDelete(id) {
+    haptic.delete();
     const updated = await deleteComment(id);
     onCommentsChange(updated);
   }
 
   return (
     <div className="comment-thread">
-      <button className="comment-toggle" onClick={() => setOpen((o) => !o)}>
+      <button className="comment-toggle" onClick={() => { haptic.tap(); setOpen((o) => !o); }}>
         <span className="comment-icon">💬</span>
         {thread.length > 0 ? `${thread.length} commentaire${thread.length > 1 ? 's' : ''}` : 'Commenter'}
         {thread.length > 0 && (

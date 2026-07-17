@@ -1,5 +1,8 @@
 'use client';
+import { useState } from 'react';
 import Avatar from './Avatar';
+import { clearActivity } from '../actions';
+import { haptic } from '../lib/haptics';
 
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -10,10 +13,28 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
-export default function ActivityFeed({ activity }) {
+export default function ActivityFeed({ activity, onClear }) {
+  const [clearing, setClearing] = useState(false);
+
+  async function handleClear() {
+    if (!confirm('Effacer tout l\'historique d\'activité affiché ? Les réservations, commentaires et objets restent inchangés.')) return;
+    setClearing(true);
+    haptic.warning();
+    const clearedAt = await clearActivity();
+    onClear(clearedAt);
+    setClearing(false);
+  }
+
   return (
     <div>
-      <h2 className="section-title"><span>📖</span> Activité récente</h2>
+      <div className="section-title-row">
+        <h2 className="section-title"><span>📖</span> Activité récente</h2>
+        {activity.length > 0 && (
+          <button className="btn small" onClick={handleClear} disabled={clearing}>
+            {clearing ? '…' : 'Effacer'}
+          </button>
+        )}
+      </div>
       {activity.length === 0 && <div className="empty-state">Rien à signaler pour l'instant.</div>}
       {activity.map((a) => (
         <div key={a.id} className="activity-row">

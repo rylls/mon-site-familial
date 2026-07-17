@@ -9,9 +9,13 @@ import CurrentBookingBanner from './CurrentBookingBanner';
 import ActivityFeed from './ActivityFeed';
 import MemberSettings from './MemberSettings';
 import MaintenanceView from './MaintenanceView';
+import TripEndModal from './TripEndModal';
 import Mountains from './decor/Mountains';
+import SideDoodles from './decor/SideDoodles';
 import { PineTreeIcon } from './decor/DoodleIcons';
 import { buildActivity } from '../lib/activity';
+import { getMaintenanceStatus } from '../lib/maintenance';
+import { haptic } from '../lib/haptics';
 
 const COOKIE_NAME = 'van_profile';
 const LAST_SEEN_KEY = 'wouchi_last_seen';
@@ -24,7 +28,15 @@ function writeCookie(name, value) {
   document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}`;
 }
 
-function AppShellInner({ members: initialMembers, bookings: initialBookings, inventory: initialInventory, comments: initialComments, mileageLogs: initialMileageLogs, maintenanceItems: initialMaintenanceItems }) {
+function AppShellInner({
+  members: initialMembers,
+  bookings: initialBookings,
+  inventory: initialInventory,
+  comments: initialComments,
+  mileageLogs: initialMileageLogs,
+  maintenanceItems: initialMaintenanceItems,
+  activityClearedAt: initialActivityClearedAt,
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab');
@@ -36,14 +48,23 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
   const [comments, setComments] = useState(initialComments);
   const [mileageLogs, setMileageLogs] = useState(initialMileageLogs);
   const [maintenanceItems, setMaintenanceItems] = useState(initialMaintenanceItems);
+  const [activityClearedAt, setActivityClearedAt] = useState(initialActivityClearedAt);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tripEndOpen, setTripEndOpen] = useState(false);
   const [hasNewActivity, setHasNewActivity] = useState(false);
 
   useEffect(() => {
     setProfileId(readCookie(COOKIE_NAME));
   }, []);
 
-  const activity = buildActivity({ bookings, comments, inventory, members });
+  const allActivity = buildActivity({ bookings, comments, inventory, members });
+  const activity = activityClearedAt ? allActivity.filter((a) => a.timestamp > activityClearedAt) : allActivity;
+
+  const currentKm = mileageLogs[0]?.km ?? null;
+  const maintenanceDueCount = maintenanceItems.filter((item) => {
+    const s = getMaintenanceStatus(item, currentKm).status;
+    return s === 'retard' || s === 'bientot';
+  }).length;
 
   useEffect(() => {
     const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
@@ -67,12 +88,17 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
   }
 
   function changeTab(next) {
+    haptic.select();
     setTab(next);
     router.replace(`/?tab=${next}`, { scroll: false });
     if (next === 'activite') {
       localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
       setHasNewActivity(false);
     }
+  }
+
+  function handleClearActivity(clearedAt) {
+    setActivityClearedAt(clearedAt);
   }
 
   return (
@@ -85,16 +111,26 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
             <p>le van de la famille</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {maintenanceDueCount > 0 && (
+              <button
+                className="header-maint-pill"
+                onClick={() => changeTab('entretien')}
+                title="Entretiens à prévoir"
+              >
+                🔧 {maintenanceDueCount}
+              </button>
+            )}
             {currentMember && (
-              <div className="current-user" onClick={() => setProfileId(null)} title="Changer de profil">
+              <div className="current-user" onClick={() => { haptic.tap(); setProfileId(null); }} title="Changer de profil">
                 <Avatar member={currentMember} />
                 <span>{currentMember.name}</span>
               </div>
             )}
-            <button className="btn small" aria-label="Réglages" onClick={() => setSettingsOpen(true)}>⚙️</button>
+            <button className="btn small" aria-label="Réglages" onClick={() => { haptic.tap(); setSettingsOpen(true); }}>⚙️</button>
             <button
               className="btn small"
               onClick={async () => {
+                haptic.tap();
                 await fetch('/api/logout', { method: 'POST' });
                 window.location.href = '/login';
               }}
@@ -105,8 +141,15 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
         </div>
       </div>
 
+      <SideDoodles tab={tab} />
+
       <div className="wrap">
-        <CurrentBookingBanner bookings={bookings} members={members} inventory={inventory} />
+        <CurrentBookingBanner
+          bookings={bookings}
+          members={members}
+          inventory={inventory}
+          onOpenTripEnd={() => setTripEndOpen(true)}
+        />
 
         <div className="tabs">
           <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => changeTab('calendrier')}>
@@ -121,6 +164,7 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
           </button>
           <button className={`tab${tab === 'entretien' ? ' active' : ''}`} onClick={() => changeTab('entretien')}>
             <span>🔧</span> Entretien
+            {maintenanceDueCount > 0 && <span className="zone-tab-count">{maintenanceDueCount}</span>}
           </button>
         </div>
 
@@ -144,7 +188,7 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
             currentMember={currentMember}
           />
         )}
-        {tab === 'activite' && <ActivityFeed activity={activity} />}
+        {tab === 'activite' && <ActivityFeed activity={activity} onClear={handleClearActivity} />}
         {tab === 'entretien' && (
           <MaintenanceView
             mileageLogs={mileageLogs}
@@ -159,6 +203,14 @@ function AppShellInner({ members: initialMembers, bookings: initialBookings, inv
       {!currentMember && <ProfilePicker members={members} onChoose={chooseProfile} />}
       {settingsOpen && (
         <MemberSettings members={members} onMembersChange={setMembers} onClose={() => setSettingsOpen(false)} />
+      )}
+      {tripEndOpen && (
+        <TripEndModal
+          items={inventory}
+          onItemsChange={setInventory}
+          currentMember={currentMember}
+          onClose={() => setTripEndOpen(false)}
+        />
       )}
     </div>
   );
