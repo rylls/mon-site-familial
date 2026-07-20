@@ -171,25 +171,27 @@ function AppShellInner({
           />
         )}
 
-        <div className="tabs">
-          <button className={`tab${tab === 'accueil' ? ' active' : ''}`} onClick={() => changeTab('accueil')}>
-            <span>🏠</span> Accueil
-          </button>
-          <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => changeTab('calendrier')}>
-            <span>📅</span> Calendrier
-          </button>
-          <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => changeTab('van')}>
-            <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> Le van
-          </button>
-          <button className={`tab${tab === 'activite' ? ' active' : ''}`} onClick={() => changeTab('activite')}>
-            <span>📖</span> Activité
-            {hasNewActivity && <span className="tab-dot" />}
-          </button>
-          <button className={`tab${tab === 'entretien' ? ' active' : ''}`} onClick={() => changeTab('entretien')}>
-            <span>🔧</span> Entretien
-            {maintenanceDueCount > 0 && <span className="zone-tab-count">{maintenanceDueCount}</span>}
-          </button>
-        </div>
+        {tab !== 'accueil' && (
+          <div className="tabs">
+            <button className={`tab${tab === 'accueil' ? ' active' : ''}`} onClick={() => changeTab('accueil')}>
+              <span>🏠</span> Accueil
+            </button>
+            <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => changeTab('calendrier')}>
+              <span>📅</span> Calendrier
+            </button>
+            <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => changeTab('van')}>
+              <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> Le van
+            </button>
+            <button className={`tab${tab === 'activite' ? ' active' : ''}`} onClick={() => changeTab('activite')}>
+              <span>📖</span> Activité
+              {hasNewActivity && <span className="tab-dot" />}
+            </button>
+            <button className={`tab${tab === 'entretien' ? ' active' : ''}`} onClick={() => changeTab('entretien')}>
+              <span>🔧</span> Entretien
+              {maintenanceDueCount > 0 && <span className="zone-tab-count">{maintenanceDueCount}</span>}
+            </button>
+          </div>
+        )}
 
         {tab === 'accueil' && <HomeView activity={activity} onGoToTab={changeTab} />}
         {tab === 'calendrier' && (
