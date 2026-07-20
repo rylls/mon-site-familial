@@ -7,6 +7,7 @@ import Calendar from './Calendar';
 import VanInventory from './VanInventory';
 import CurrentBookingBanner from './CurrentBookingBanner';
 import DashboardOverview from './DashboardOverview';
+import HomeView from './HomeView';
 import ActivityFeed from './ActivityFeed';
 import MemberSettings from './MemberSettings';
 import MaintenanceView from './MaintenanceView';
@@ -42,7 +43,7 @@ function AppShellInner({
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab');
   const [profileId, setProfileId] = useState(undefined);
-  const [tab, setTab] = useState(['calendrier', 'van', 'activite', 'entretien'].includes(urlTab) ? urlTab : 'calendrier');
+  const [tab, setTab] = useState(['accueil', 'calendrier', 'van', 'activite', 'entretien'].includes(urlTab) ? urlTab : 'accueil');
   const [members, setMembers] = useState(initialMembers);
   const [bookings, setBookings] = useState(initialBookings);
   const [inventory, setInventory] = useState(initialInventory);
@@ -107,7 +108,7 @@ function AppShellInner({
       <Mountains />
       <div className="top-header">
         <div className="top-header-inner">
-          <div className="brand">
+          <div className="brand brand-clickable" onClick={() => changeTab('accueil')} title="Retour à l'accueil">
             <h1>Wouchi</h1>
             <p>Interface de réservation</p>
           </div>
@@ -168,6 +169,9 @@ function AppShellInner({
         />
 
         <div className="tabs">
+          <button className={`tab${tab === 'accueil' ? ' active' : ''}`} onClick={() => changeTab('accueil')}>
+            <span>🏠</span> Accueil
+          </button>
           <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => changeTab('calendrier')}>
             <span>📅</span> Calendrier
           </button>
@@ -184,6 +188,7 @@ function AppShellInner({
           </button>
         </div>
 
+        {tab === 'accueil' && <HomeView activity={activity} onGoToTab={changeTab} />}
         {tab === 'calendrier' && (
           <Calendar
             members={members}
