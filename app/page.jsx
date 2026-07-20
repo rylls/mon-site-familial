@@ -1,10 +1,10 @@
 import AppShell from './components/AppShell';
-import { getMembers, getBookings, getInventory, getComments, getMileageLogs, getMaintenanceItems, getAppSetting } from './actions';
+import { getMembers, getBookings, getInventory, getComments, getMileageLogs, getMaintenanceItems, getAppSetting, getImportantInfo } from './actions';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
-  const [members, bookings, inventory, comments, mileageLogs, maintenanceItems, activityClearedAt] = await Promise.all([
+  const [members, bookings, inventory, comments, mileageLogs, maintenanceItems, activityClearedAt, importantInfo] = await Promise.all([
     getMembers(),
     getBookings(),
     getInventory(),
@@ -12,6 +12,7 @@ export default async function Page() {
     getMileageLogs(),
     getMaintenanceItems(),
     getAppSetting('activity_cleared_at'),
+    getImportantInfo(),
   ]);
 
   return (
@@ -23,6 +24,7 @@ export default async function Page() {
       mileageLogs={mileageLogs}
       maintenanceItems={maintenanceItems}
       activityClearedAt={activityClearedAt}
+      importantInfo={importantInfo}
     />
   );
 }

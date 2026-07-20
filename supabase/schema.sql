@@ -159,6 +159,18 @@ create table if not exists app_settings (
   updated_at timestamptz not null default now()
 );
 
+-- Blocs "informations importantes" affichés sur l'accueil (ex: comment
+-- ouvrir le toit), éditables depuis l'app, avec photo optionnelle
+-- (stockée dans le bucket Storage "important-info").
+create table if not exists important_info (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  body text,
+  photo_url text,
+  position integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
 -- RLS activée : aucune policy publique. L'app utilise la clé "service_role"
 -- côté serveur (elle contourne toujours RLS), donc une clé anon fuitée
 -- n'aurait accès à rien.
@@ -169,3 +181,4 @@ alter table comments enable row level security;
 alter table mileage_logs enable row level security;
 alter table maintenance_items enable row level security;
 alter table app_settings enable row level security;
+alter table important_info enable row level security;

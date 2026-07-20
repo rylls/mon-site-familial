@@ -38,6 +38,7 @@ function AppShellInner({
   mileageLogs: initialMileageLogs,
   maintenanceItems: initialMaintenanceItems,
   activityClearedAt: initialActivityClearedAt,
+  importantInfo: initialImportantInfo,
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,6 +52,7 @@ function AppShellInner({
   const [mileageLogs, setMileageLogs] = useState(initialMileageLogs);
   const [maintenanceItems, setMaintenanceItems] = useState(initialMaintenanceItems);
   const [activityClearedAt, setActivityClearedAt] = useState(initialActivityClearedAt);
+  const [importantInfo, setImportantInfo] = useState(initialImportantInfo || []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tripEndOpen, setTripEndOpen] = useState(false);
   const [hasNewActivity, setHasNewActivity] = useState(false);
@@ -195,6 +197,8 @@ function AppShellInner({
             members={members}
             inventory={inventory}
             mileageLogs={mileageLogs}
+            importantInfo={importantInfo}
+            onImportantInfoChange={setImportantInfo}
             currentMember={currentMember}
             onItemsChange={setInventory}
             onGoToTab={changeTab}

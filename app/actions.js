@@ -229,3 +229,68 @@ export async function clearActivity() {
   if (error) throw error;
   return now;
 }
+
+export async function getImportantInfo() {
+  const { data, error } = await supabaseAdmin
+    .from('important_info')
+    .select('*')
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.error('getImportantInfo failed (has the migration run?):', error.message);
+    return [];
+  }
+  return data;
+}
+
+export async function addImportantInfo({ title, body }) {
+  const { data: last } = await supabaseAdmin
+    .from('important_info')
+    .select('position')
+    .order('position', { ascending: false })
+    .limit(1);
+  const position = (last?.[0]?.position ?? -1) + 1;
+  const { error } = await supabaseAdmin
+    .from('important_info')
+    .insert({ title, body: body || null, position });
+  if (error) throw error;
+  return getImportantInfo();
+}
+
+export async function updateImportantInfo(id, { title, body }) {
+  const { error } = await supabaseAdmin
+    .from('important_info')
+    .update({ title, body: body || null })
+    .eq('id', id);
+  if (error) throw error;
+  return getImportantInfo();
+}
+
+export async function deleteImportantInfo(id) {
+  const { data: row } = await supabaseAdmin.from('important_info').select('photo_url').eq('id', id).maybeSingle();
+  if (row?.photo_url) {
+    const path = row.photo_url.split('/important-info/')[1];
+    if (path) await supabaseAdmin.storage.from('important-info').remove([path]);
+  }
+  const { error } = await supabaseAdmin.from('important_info').delete().eq('id', id);
+  if (error) throw error;
+  return getImportantInfo();
+}
+
+export async function uploadImportantInfoPhoto(id, formData) {
+  const file = formData.get('file');
+  if (!file) throw new Error('Aucun fichier');
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${id}-${Date.now()}.${ext}`;
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from('important-info')
+    .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+  if (uploadError) throw uploadError;
+  const { data: pub } = supabaseAdmin.storage.from('important-info').getPublicUrl(path);
+  const { error } = await supabaseAdmin
+    .from('important_info')
+    .update({ photo_url: pub.publicUrl })
+    .eq('id', id);
+  if (error) throw error;
+  return getImportantInfo();
+}
