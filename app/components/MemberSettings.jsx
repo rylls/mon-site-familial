@@ -5,16 +5,20 @@ import Avatar from './Avatar';
 import { haptic } from '../lib/haptics';
 
 const PRESET_COLORS = ['#C67853', '#7A93A6', '#E3A83B', '#5B7B62', '#C1622D', '#6E8F57', '#5E84A6', '#9B6B9E'];
+const PRESET_ICONS = ['🚐', '⛺', '🏔️', '🌲', '🧭', '🔥', '🌞', '🐶', '🥾', '😎', '🚴', '📸', '⭐', '👑'];
 
 export default function MemberSettings({ members, onMembersChange, onBookingsChange, onCommentsChange, onClose }) {
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const [newMember, setNewMember] = useState({ name: '', role: 'enfant', color: PRESET_COLORS[0] });
+  const [newMember, setNewMember] = useState({ name: '', role: 'enfant', color: PRESET_COLORS[0], icon: null });
   const [adding, setAdding] = useState(false);
 
-  function updateDraft(id, patch) {
-    setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+  function updateDraft(m, patch) {
+    setDrafts((prev) => {
+      const base = prev[m.id] || { name: m.name, color: m.color, role: m.role, icon: m.icon || null };
+      return { ...prev, [m.id]: { ...base, ...patch } };
+    });
   }
 
   async function handleSave(id) {
@@ -22,7 +26,7 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
     if (!draft || !draft.name.trim()) return;
     haptic.success();
     setSavingId(id);
-    const updated = await updateMember(id, { name: draft.name.trim(), color: draft.color, role: draft.role });
+    const updated = await updateMember(id, { name: draft.name.trim(), color: draft.color, role: draft.role, icon: draft.icon });
     onMembersChange(updated);
     setSavingId(null);
   }
@@ -47,9 +51,9 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
     haptic.success();
     setAdding(true);
     try {
-      const updated = await addMember({ name: newMember.name.trim(), role: newMember.role, color: newMember.color });
+      const updated = await addMember({ name: newMember.name.trim(), role: newMember.role, color: newMember.color, icon: newMember.icon });
       onMembersChange(updated);
-      setNewMember({ name: '', role: 'enfant', color: PRESET_COLORS[0] });
+      setNewMember({ name: '', role: 'enfant', color: PRESET_COLORS[0], icon: null });
     } finally {
       setAdding(false);
     }
@@ -59,31 +63,51 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
     <div className="overlay" onClick={onClose}>
       <div className="settings-card" onClick={(e) => e.stopPropagation()}>
         <h1>Réglages de la famille</h1>
-        <p>Modifie le nom, le rôle ou la couleur de chaque profil.</p>
+        <p>Modifie le nom, le rôle, l'icône ou la couleur de chaque profil.</p>
         {members.map((m) => {
-          const draft = drafts[m.id] || { name: m.name, color: m.color, role: m.role };
-          const dirty = draft.name !== m.name || draft.color !== m.color || draft.role !== m.role;
+          const draft = drafts[m.id] || { name: m.name, color: m.color, role: m.role, icon: m.icon || null };
+          const dirty = draft.name !== m.name || draft.color !== m.color || draft.role !== m.role || (draft.icon || null) !== (m.icon || null);
           return (
             <div key={m.id} className="settings-row">
-              <Avatar member={{ ...m, color: draft.color }} />
+              <Avatar member={{ ...m, color: draft.color, icon: draft.icon }} />
               <input
                 type="text"
                 value={draft.name}
-                onChange={(e) => updateDraft(m.id, { name: e.target.value })}
+                onChange={(e) => updateDraft(m, { name: e.target.value })}
               />
               <div className="settings-role-toggle">
                 <button
                   className={`settings-role-btn${draft.role === 'parent' ? ' active' : ''}`}
-                  onClick={() => updateDraft(m.id, { role: 'parent' })}
+                  onClick={() => updateDraft(m, { role: 'parent' })}
                 >
                   Parent
                 </button>
                 <button
                   className={`settings-role-btn${draft.role === 'enfant' ? ' active' : ''}`}
-                  onClick={() => updateDraft(m.id, { role: 'enfant' })}
+                  onClick={() => updateDraft(m, { role: 'enfant' })}
                 >
                   Enfant
                 </button>
+              </div>
+              <div className="settings-icons">
+                <button
+                  className={`settings-icon-btn${!draft.icon ? ' selected' : ''}`}
+                  aria-label="Aucune icône (initiale)"
+                  title="Initiale"
+                  onClick={() => updateDraft(m, { icon: null })}
+                >
+                  {m.name.charAt(0)}
+                </button>
+                {PRESET_ICONS.map((ic) => (
+                  <button
+                    key={ic}
+                    className={`settings-icon-btn${draft.icon === ic ? ' selected' : ''}`}
+                    aria-label={ic}
+                    onClick={() => updateDraft(m, { icon: ic })}
+                  >
+                    {ic}
+                  </button>
+                ))}
               </div>
               <div className="settings-colors">
                 {PRESET_COLORS.map((c) => (
@@ -92,7 +116,7 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
                     className={`settings-swatch${draft.color === c ? ' selected' : ''}`}
                     style={{ background: c }}
                     aria-label={c}
-                    onClick={() => updateDraft(m.id, { color: c })}
+                    onClick={() => updateDraft(m, { color: c })}
                   />
                 ))}
               </div>
@@ -114,7 +138,7 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
         })}
 
         <div className="settings-row settings-row-new">
-          <Avatar member={{ name: newMember.name || '?', color: newMember.color }} />
+          <Avatar member={{ name: newMember.name || '?', color: newMember.color, icon: newMember.icon }} />
           <input
             type="text"
             placeholder="Nouveau profil…"
@@ -134,6 +158,26 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
             >
               Enfant
             </button>
+          </div>
+          <div className="settings-icons">
+            <button
+              className={`settings-icon-btn${!newMember.icon ? ' selected' : ''}`}
+              aria-label="Aucune icône (initiale)"
+              title="Initiale"
+              onClick={() => setNewMember((p) => ({ ...p, icon: null }))}
+            >
+              {(newMember.name || '?').charAt(0)}
+            </button>
+            {PRESET_ICONS.map((ic) => (
+              <button
+                key={ic}
+                className={`settings-icon-btn${newMember.icon === ic ? ' selected' : ''}`}
+                aria-label={ic}
+                onClick={() => setNewMember((p) => ({ ...p, icon: ic }))}
+              >
+                {ic}
+              </button>
+            ))}
           </div>
           <div className="settings-colors">
             {PRESET_COLORS.map((c) => (

@@ -3,7 +3,7 @@ export default function Avatar({ member, size = 'md' }) {
   const cls = size === 'md' ? 'avatar' : `avatar ${size}`;
   return (
     <div className={cls} style={{ background: member.color }}>
-      {member.name.charAt(0)}
+      {member.icon || member.name.charAt(0)}
     </div>
   );
 }

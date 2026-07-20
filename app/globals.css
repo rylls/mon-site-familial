@@ -999,6 +999,19 @@ input::placeholder{ color:var(--ink-faint); }
   cursor:pointer; padding:0;
 }
 .settings-swatch.selected{ border-color:var(--ink); }
+.settings-icons{ display:flex; flex-wrap:wrap; gap:5px; max-width:220px; }
+.settings-icon-btn{
+  width:26px; height:26px;
+  border-radius:8px;
+  border:1.5px solid var(--line);
+  background:var(--card-soft);
+  cursor:pointer;
+  padding:0;
+  font-size:14px;
+  display:flex; align-items:center; justify-content:center;
+  line-height:1;
+}
+.settings-icon-btn.selected{ border-color:var(--accent); background:rgba(193,98,45,0.15); }
 .settings-role-toggle{
   display:flex;
   border:1.5px solid var(--line);

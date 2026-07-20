@@ -80,10 +80,10 @@ export async function bulkFillZone(zone, updated_by) {
   return getInventory();
 }
 
-export async function updateMember(id, { name, color, role }) {
+export async function updateMember(id, { name, color, role, icon }) {
   const { error } = await supabaseAdmin
     .from('members')
-    .update({ name, color, role })
+    .update({ name, color, role, icon: icon || null })
     .eq('id', id);
   if (error) throw error;
   return getMembers();
@@ -99,11 +99,11 @@ function slugifyMemberId(name) {
   return `${base || 'membre'}-${Date.now().toString(36)}`;
 }
 
-export async function addMember({ name, role, color }) {
+export async function addMember({ name, role, color, icon }) {
   const id = slugifyMemberId(name);
   const { error } = await supabaseAdmin
     .from('members')
-    .insert({ id, name, role, color });
+    .insert({ id, name, role, color, icon: icon || null });
   if (error) throw error;
   return getMembers();
 }

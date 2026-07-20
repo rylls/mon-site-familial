@@ -8,6 +8,9 @@ create table if not exists members (
   color text not null
 );
 
+-- Icône emoji personnalisée affichée à la place de l'initiale (optionnelle).
+alter table members add column if not exists icon text;
+
 insert into members (id, name, role, color) values
   ('dominique', 'Dominique', 'parent', '#C67853'),
   ('christine', 'Christine', 'parent', '#7A93A6'),
