@@ -225,7 +225,13 @@ function AppShellInner({
 
       {!currentMember && <ProfilePicker members={members} onChoose={chooseProfile} />}
       {settingsOpen && (
-        <MemberSettings members={members} onMembersChange={setMembers} onClose={() => setSettingsOpen(false)} />
+        <MemberSettings
+          members={members}
+          onMembersChange={setMembers}
+          onBookingsChange={setBookings}
+          onCommentsChange={setComments}
+          onClose={() => setSettingsOpen(false)}
+        />
       )}
       {tripEndOpen && (
         <TripEndModal

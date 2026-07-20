@@ -109,9 +109,29 @@ export async function addMember({ name, role, color }) {
 }
 
 export async function deleteMember(id) {
+  const { error: commentsError } = await supabaseAdmin.from('comments').delete().eq('member_id', id);
+  if (commentsError) throw commentsError;
+
+  const { error: bookingsError } = await supabaseAdmin.from('bookings').delete().eq('member_id', id);
+  if (bookingsError) throw bookingsError;
+
+  const { error: mileageError } = await supabaseAdmin
+    .from('mileage_logs')
+    .update({ recorded_by: null })
+    .eq('recorded_by', id);
+  if (mileageError) throw mileageError;
+
+  const { error: inventoryError } = await supabaseAdmin
+    .from('inventory_items')
+    .update({ updated_by: null })
+    .eq('updated_by', id);
+  if (inventoryError) throw inventoryError;
+
   const { error } = await supabaseAdmin.from('members').delete().eq('id', id);
   if (error) throw error;
-  return getMembers();
+
+  const [members, bookings, comments] = await Promise.all([getMembers(), getBookings(), getComments()]);
+  return { members, bookings, comments };
 }
 
 export async function getComments() {

@@ -6,10 +6,8 @@ import { haptic } from '../lib/haptics';
 
 const PRESET_COLORS = ['#C67853', '#7A93A6', '#E3A83B', '#5B7B62', '#C1622D', '#6E8F57', '#5E84A6', '#9B6B9E'];
 
-export default function MemberSettings({ members, onMembersChange, onClose }) {
-  const [drafts, setDrafts] = useState(
-    Object.fromEntries(members.map((m) => [m.id, { name: m.name, color: m.color, role: m.role }]))
-  );
+export default function MemberSettings({ members, onMembersChange, onBookingsChange, onCommentsChange, onClose }) {
+  const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [newMember, setNewMember] = useState({ name: '', role: 'enfant', color: PRESET_COLORS[0] });
@@ -21,7 +19,7 @@ export default function MemberSettings({ members, onMembersChange, onClose }) {
 
   async function handleSave(id) {
     const draft = drafts[id];
-    if (!draft.name.trim()) return;
+    if (!draft || !draft.name.trim()) return;
     haptic.success();
     setSavingId(id);
     const updated = await updateMember(id, { name: draft.name.trim(), color: draft.color, role: draft.role });
@@ -30,14 +28,16 @@ export default function MemberSettings({ members, onMembersChange, onClose }) {
   }
 
   async function handleDelete(id, name) {
-    if (!confirm(`Supprimer le profil "${name}" ? Impossible si des réservations ou commentaires y sont liés.`)) return;
+    if (!confirm(`Supprimer le profil "${name}" ? Ses réservations et commentaires seront aussi supprimés.`)) return;
     haptic.delete();
     setDeletingId(id);
     try {
-      const updated = await deleteMember(id);
-      onMembersChange(updated);
+      const { members: updatedMembers, bookings, comments } = await deleteMember(id);
+      onMembersChange(updatedMembers);
+      onBookingsChange?.(bookings);
+      onCommentsChange?.(comments);
     } catch (e) {
-      alert('Impossible de supprimer ce profil : il a probablement des réservations ou commentaires liés.');
+      alert('Impossible de supprimer ce profil.');
     }
     setDeletingId(null);
   }
@@ -49,10 +49,6 @@ export default function MemberSettings({ members, onMembersChange, onClose }) {
     try {
       const updated = await addMember({ name: newMember.name.trim(), role: newMember.role, color: newMember.color });
       onMembersChange(updated);
-      setDrafts((prev) => {
-        const m = updated.find((u) => u.name === newMember.name.trim());
-        return m ? { ...prev, [m.id]: { name: m.name, color: m.color, role: m.role } } : prev;
-      });
       setNewMember({ name: '', role: 'enfant', color: PRESET_COLORS[0] });
     } finally {
       setAdding(false);
@@ -65,7 +61,7 @@ export default function MemberSettings({ members, onMembersChange, onClose }) {
         <h1>Réglages de la famille</h1>
         <p>Modifie le nom, le rôle ou la couleur de chaque profil.</p>
         {members.map((m) => {
-          const draft = drafts[m.id];
+          const draft = drafts[m.id] || { name: m.name, color: m.color, role: m.role };
           const dirty = draft.name !== m.name || draft.color !== m.color || draft.role !== m.role;
           return (
             <div key={m.id} className="settings-row">
