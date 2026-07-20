@@ -195,6 +195,25 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
         </div>
       )}
 
+      <div className="booking-bar">
+        <div className="booking-bar-info">
+          {!start && <div className="booking-bar-hint">Sélectionnez une date de départ</div>}
+          {start && !end && (
+            <>
+              <div className="booking-bar-label">Départ</div>
+              <div className="booking-bar-value">{formatRange(fmtDate(start), fmtDate(start))} · choisissez le retour</div>
+            </>
+          )}
+          {start && end && (
+            <>
+              <div className="booking-bar-label">{editingId ? 'Modification en cours' : 'Trajet sélectionné'}</div>
+              <div className="booking-bar-value">{formatRange(fmtDate(start), fmtDate(end))} · {nights} nuit{nights > 1 ? 's' : ''}</div>
+            </>
+          )}
+        </div>
+        <button className="btn primary" disabled={!end} onClick={handleConfirm}>{editingId ? 'Enregistrer' : 'Réserver'}</button>
+      </div>
+
       <h2 className="section-title"><TicketPathIcon size={20} /> Prochains trajets</h2>
       {upcoming.length === 0 && <div className="empty-state">Aucun trajet prévu. Sélectionnez des dates ci-dessus.</div>}
       {upcoming.map((b) => {
@@ -224,25 +243,6 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
           </div>
         );
       })}
-
-      <div className="booking-bar">
-        <div className="booking-bar-info">
-          {!start && <div className="booking-bar-hint">Sélectionnez une date de départ</div>}
-          {start && !end && (
-            <>
-              <div className="booking-bar-label">Départ</div>
-              <div className="booking-bar-value">{formatRange(fmtDate(start), fmtDate(start))} · choisissez le retour</div>
-            </>
-          )}
-          {start && end && (
-            <>
-              <div className="booking-bar-label">{editingId ? 'Modification en cours' : 'Trajet sélectionné'}</div>
-              <div className="booking-bar-value">{formatRange(fmtDate(start), fmtDate(end))} · {nights} nuit{nights > 1 ? 's' : ''}</div>
-            </>
-          )}
-        </div>
-        <button className="btn primary" disabled={!end} onClick={handleConfirm}>{editingId ? 'Enregistrer' : 'Réserver'}</button>
-      </div>
     </div>
   );
 }
