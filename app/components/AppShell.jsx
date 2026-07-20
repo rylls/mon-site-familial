@@ -6,6 +6,7 @@ import ProfilePicker from './ProfilePicker';
 import Calendar from './Calendar';
 import VanInventory from './VanInventory';
 import CurrentBookingBanner from './CurrentBookingBanner';
+import DashboardOverview from './DashboardOverview';
 import ActivityFeed from './ActivityFeed';
 import MemberSettings from './MemberSettings';
 import MaintenanceView from './MaintenanceView';
@@ -108,7 +109,7 @@ function AppShellInner({
         <div className="top-header-inner">
           <div className="brand">
             <h1>Wouchi</h1>
-            <p>le van de la famille</p>
+            <p>Interface de réservation</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {maintenanceDueCount > 0 && (
@@ -157,6 +158,13 @@ function AppShellInner({
           members={members}
           inventory={inventory}
           onOpenTripEnd={() => setTripEndOpen(true)}
+        />
+
+        <DashboardOverview
+          maintenanceItems={maintenanceItems}
+          currentKm={currentKm}
+          inventory={inventory}
+          onGoToTab={changeTab}
         />
 
         <div className="tabs">
