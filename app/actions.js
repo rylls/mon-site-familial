@@ -80,11 +80,36 @@ export async function bulkFillZone(zone, updated_by) {
   return getInventory();
 }
 
-export async function updateMember(id, { name, color }) {
+export async function updateMember(id, { name, color, role }) {
   const { error } = await supabaseAdmin
     .from('members')
-    .update({ name, color })
+    .update({ name, color, role })
     .eq('id', id);
+  if (error) throw error;
+  return getMembers();
+}
+
+function slugifyMemberId(name) {
+  const base = name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return `${base || 'membre'}-${Date.now().toString(36)}`;
+}
+
+export async function addMember({ name, role, color }) {
+  const id = slugifyMemberId(name);
+  const { error } = await supabaseAdmin
+    .from('members')
+    .insert({ id, name, role, color });
+  if (error) throw error;
+  return getMembers();
+}
+
+export async function deleteMember(id) {
+  const { error } = await supabaseAdmin.from('members').delete().eq('id', id);
   if (error) throw error;
   return getMembers();
 }
