@@ -159,6 +159,7 @@ function AppShellInner({
           members={members}
           inventory={inventory}
           onOpenTripEnd={() => setTripEndOpen(true)}
+          showChecklist={tab !== 'accueil'}
         />
 
         <DashboardOverview
