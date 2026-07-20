@@ -1,3 +1,35 @@
+export function CloudIcon({ size = 18, color = '#fff' }) {
+  return (
+    <svg width={size} height={size * 0.6} viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M8 17 Q3 17 3 12.5 Q3 8.5 7.5 8.5 Q8.3 4 13.5 4 Q19 4 20 9 Q25.5 9 25.5 13.5 Q25.5 17 21 17 Z"
+        fill={color}
+        stroke="#3B2B1D"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function BirdIcon({ size = 14, color = '#3B2B1D' }) {
+  return (
+    <svg width={size} height={size * 0.5} viewBox="0 0 24 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 8 Q6 1 12 7 Q18 1 23 8" stroke={color} strokeWidth="1.6" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+export function CampfireIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3 Q16 9 12 14 Q8 9 12 3 Z" fill="#E0A83E" stroke="#3B2B1D" strokeWidth="1" />
+      <path d="M12 8 Q14 11 12 14 Q10 11 12 8 Z" fill="#C1622D" />
+      <path d="M4 20 L11 15 M20 20 L13 15 M6 20 L18 20" stroke="#8A6F4E" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function PineTreeIcon({ size = 18, color = '#6E8F57' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

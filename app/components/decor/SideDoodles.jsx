@@ -4,42 +4,42 @@ import { SunIcon, TentIcon, BookIcon, WrenchIcon, GearIcon, OilCanIcon, PineTree
 const SETS = {
   calendrier: {
     left: [
-      { Icon: SunIcon, size: 92, rotate: -8 },
-      { Icon: TicketPathIcon, size: 68, rotate: 6 },
+      { Icon: SunIcon, size: 170, rotate: -8 },
+      { Icon: TicketPathIcon, size: 128, rotate: 6 },
     ],
     right: [
-      { Icon: CompassIcon, size: 80, rotate: 10 },
-      { Icon: TentIcon, size: 72, rotate: -6 },
+      { Icon: CompassIcon, size: 150, rotate: 10 },
+      { Icon: TentIcon, size: 136, rotate: -6 },
     ],
   },
   van: {
     left: [
-      { Icon: PineTreeIcon, size: 88, rotate: -4 },
-      { Icon: TentIcon, size: 68, rotate: 8 },
+      { Icon: PineTreeIcon, size: 164, rotate: -4 },
+      { Icon: TentIcon, size: 128, rotate: 8 },
     ],
     right: [
-      { Icon: WrenchIcon, size: 76, rotate: 12 },
-      { Icon: PineTreeIcon, size: 60, rotate: -10 },
+      { Icon: WrenchIcon, size: 144, rotate: 12 },
+      { Icon: PineTreeIcon, size: 114, rotate: -10 },
     ],
   },
   activite: {
     left: [
-      { Icon: BookIcon, size: 84, rotate: -6 },
-      { Icon: CompassIcon, size: 60, rotate: 8 },
+      { Icon: BookIcon, size: 156, rotate: -6 },
+      { Icon: CompassIcon, size: 114, rotate: 8 },
     ],
     right: [
-      { Icon: BookIcon, size: 68, rotate: 10 },
-      { Icon: TicketPathIcon, size: 60, rotate: -8 },
+      { Icon: BookIcon, size: 128, rotate: 10 },
+      { Icon: TicketPathIcon, size: 114, rotate: -8 },
     ],
   },
   entretien: {
     left: [
-      { Icon: GearIcon, size: 80, rotate: 10 },
-      { Icon: OilCanIcon, size: 64, rotate: -6 },
+      { Icon: GearIcon, size: 150, rotate: 10 },
+      { Icon: OilCanIcon, size: 120, rotate: -6 },
     ],
     right: [
-      { Icon: WrenchIcon, size: 84, rotate: -10 },
-      { Icon: GearIcon, size: 56, rotate: 14 },
+      { Icon: WrenchIcon, size: 158, rotate: -10 },
+      { Icon: GearIcon, size: 106, rotate: 14 },
     ],
   },
 };
