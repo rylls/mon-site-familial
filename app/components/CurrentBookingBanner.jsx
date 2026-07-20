@@ -46,7 +46,15 @@ export default function CurrentBookingBanner({ bookings, members, inventory = []
   return (
     <div className="banner" style={{ background: `linear-gradient(180deg, ${m?.color || '#333'}, ${shade(m?.color)})` }}>
       <div className="banner-van-strip">
-        <img src="/images/van-banner.png" alt="" className="banner-van-img" />
+        <div className="banner-van-wrap">
+          <img src="/images/van-banner.png" alt="" className="banner-van-img" />
+          <div className="banner-wheel-pos rear">
+            <img src="/images/van-wheel.png" alt="" />
+          </div>
+          <div className="banner-wheel-pos front">
+            <img src="/images/van-wheel.png" alt="" />
+          </div>
+        </div>
       </div>
 
       {trips.length > 1 && (
