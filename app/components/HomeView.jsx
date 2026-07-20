@@ -6,6 +6,32 @@ import { parseDate, formatRange, startOfToday, fmtDate } from '../lib/dates';
 import { fetchDailyWeather, weatherEmoji } from '../lib/weather';
 import { haptic } from '../lib/haptics';
 
+function compressImage(file, maxDim = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { reject(new Error('Compression échouée')); return; }
+          resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
+    img.src = url;
+  });
+}
+
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
   if (diff < 60) return 'à l\'instant';
@@ -234,8 +260,9 @@ function ImportantInfoCard({ items, onItemsChange }) {
     haptic.tap();
     setUploadingId(id);
     try {
+      const compressed = await compressImage(file).catch(() => file);
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', compressed);
       const updated = await uploadImportantInfoPhoto(id, fd);
       onItemsChange(updated);
     } catch (e) {
