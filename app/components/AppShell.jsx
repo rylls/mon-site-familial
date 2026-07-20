@@ -188,7 +188,18 @@ function AppShellInner({
           </button>
         </div>
 
-        {tab === 'accueil' && <HomeView activity={activity} onGoToTab={changeTab} />}
+        {tab === 'accueil' && (
+          <HomeView
+            activity={activity}
+            bookings={bookings}
+            members={members}
+            inventory={inventory}
+            mileageLogs={mileageLogs}
+            currentMember={currentMember}
+            onItemsChange={setInventory}
+            onGoToTab={changeTab}
+          />
+        )}
         {tab === 'calendrier' && (
           <Calendar
             members={members}
