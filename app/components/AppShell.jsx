@@ -157,16 +157,13 @@ function AppShellInner({
         <CurrentBookingBanner
           bookings={bookings}
           members={members}
-          inventory={inventory}
           onOpenTripEnd={() => setTripEndOpen(true)}
-          showChecklist={tab !== 'accueil'}
         />
 
         {tab !== 'accueil' && (
           <DashboardOverview
             maintenanceItems={maintenanceItems}
             currentKm={currentKm}
-            inventory={inventory}
             onGoToTab={changeTab}
           />
         )}

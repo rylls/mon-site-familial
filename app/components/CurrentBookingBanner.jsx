@@ -4,11 +4,10 @@ import Avatar from './Avatar';
 import { parseDate, formatRange, startOfToday } from '../lib/dates';
 import { haptic } from '../lib/haptics';
 
-export default function CurrentBookingBanner({ bookings, members, inventory = [], onOpenTripEnd, showChecklist = true }) {
+export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd }) {
   const [index, setIndex] = useState(0);
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const today = startOfToday();
-  const notFullCount = inventory.filter((i) => i.level !== 'plein').length;
 
   const isCurrent = (b) => parseDate(b.start_date) <= today && today <= parseDate(b.end_date);
   const daysSinceEnd = (b) => Math.round((today - parseDate(b.end_date)) / 86400000);
@@ -83,12 +82,6 @@ export default function CurrentBookingBanner({ bookings, members, inventory = []
           <div className="banner-sub">{m?.name}{booking.note ? ` · ${booking.note}` : ''}</div>
         </div>
       </div>
-
-      {showChecklist && notFullCount > 0 && (
-        <div className="banner-checklist">
-          ⚠️ {notFullCount} objet{notFullCount > 1 ? 's' : ''} à recharger avant le départ
-        </div>
-      )}
 
       {(current || recentlyEnded) && (
         <button
