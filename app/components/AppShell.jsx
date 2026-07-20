@@ -162,12 +162,14 @@ function AppShellInner({
           showChecklist={tab !== 'accueil'}
         />
 
-        <DashboardOverview
-          maintenanceItems={maintenanceItems}
-          currentKm={currentKm}
-          inventory={inventory}
-          onGoToTab={changeTab}
-        />
+        {tab !== 'accueil' && (
+          <DashboardOverview
+            maintenanceItems={maintenanceItems}
+            currentKm={currentKm}
+            inventory={inventory}
+            onGoToTab={changeTab}
+          />
+        )}
 
         <div className="tabs">
           <button className={`tab${tab === 'accueil' ? ' active' : ''}`} onClick={() => changeTab('accueil')}>
