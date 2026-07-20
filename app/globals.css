@@ -38,7 +38,7 @@ body{
 .hand{ font-family:'Caveat', cursive; letter-spacing:normal; }
 .doodle{ font-family:'Patrick Hand', cursive; letter-spacing:normal; }
 
-.wrap{ max-width:1100px; margin:0 auto; padding:0 24px 90px; position:relative; }
+.wrap{ max-width:1100px; margin:0 auto; padding:0 24px 90px; position:relative; z-index:2; }
 
 button{ font-family:inherit; }
 
@@ -153,13 +153,9 @@ input::placeholder{ color:var(--ink-faint); }
 }
 .mountains-van{
   position:absolute;
+  left:22%;
   top:-15px;
-  animation:vanCruise 16s linear infinite;
   filter:drop-shadow(0 2px 2px rgba(0,0,0,0.25));
-}
-@keyframes vanCruise{
-  0%{ left:-10%; }
-  100%{ left:106%; }
 }
 
 /* ---------- Sticky header ---------- */
@@ -883,25 +879,21 @@ input::placeholder{ color:var(--ink-faint); }
 
 /* ---------- Side page doodles ---------- */
 .side-doodles{ display:none; }
-@media (min-width:1560px){
+@media (min-width:1400px){
   .side-doodles{ display:block; }
   .side-doodles-col{
     position:fixed;
     top:130px;
     display:flex;
     flex-direction:column;
-    gap:70px;
+    gap:50px;
     pointer-events:none;
-    z-index:1;
-    opacity:.32;
+    z-index:0;
+    opacity:.4;
   }
-  .side-doodles-col.left{ left:18px; }
-  .side-doodles-col.right{ right:18px; }
+  .side-doodles-col.left{ left:calc(50% - 640px); }
+  .side-doodles-col.right{ right:calc(50% - 640px); }
   .side-doodle-item{ color:var(--ink); }
-}
-@media (min-width:1820px){
-  .side-doodles-col.left{ left:5%; }
-  .side-doodles-col.right{ right:5%; }
 }
 
 /* ---------- Decorative doodles ---------- */
