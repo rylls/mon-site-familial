@@ -277,6 +277,11 @@ export async function deleteImportantInfo(id) {
   return getImportantInfo();
 }
 
+export async function reorderImportantInfo(orderedIds) {
+  await Promise.all(orderedIds.map((id, position) => supabaseAdmin.from('important_info').update({ position }).eq('id', id)));
+  return getImportantInfo();
+}
+
 export async function uploadImportantInfoPhoto(id, formData) {
   const file = formData.get('file');
   if (!file) throw new Error('Aucun fichier');

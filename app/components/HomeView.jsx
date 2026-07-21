@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import Avatar from './Avatar';
-import { addImportantInfo, updateImportantInfo, deleteImportantInfo, uploadImportantInfoPhoto } from '../actions';
+import { addImportantInfo, updateImportantInfo, deleteImportantInfo, uploadImportantInfoPhoto, reorderImportantInfo } from '../actions';
 import { parseDate, formatRange, startOfToday, fmtDate } from '../lib/dates';
 import { fetchDailyWeather, weatherEmoji } from '../lib/weather';
 import { getMaintenanceStatus, STATUS_ORDER } from '../lib/maintenance';
@@ -375,8 +375,62 @@ function ImportantInfoCard({ items, onItemsChange }) {
   const [saving, setSaving] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
   const [lightbox, setLightbox] = useState(null);
+  const [collapsedIds, setCollapsedIds] = useState(() => new Set());
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
   const newBodyRef = useRef(null);
   const editBodyRef = useRef(null);
+  const listRef = useRef(null);
+
+  function toggleCollapsed(id) {
+    haptic.tap();
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handlePointerDownDrag(e, id) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    haptic.tap();
+    setDraggingId(id);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+  }
+
+  function handlePointerMoveDrag(e) {
+    if (!draggingId || !listRef.current) return;
+    const blocks = Array.from(listRef.current.querySelectorAll('[data-info-id]'));
+    const y = e.clientY;
+    let overId = null;
+    for (const block of blocks) {
+      const rect = block.getBoundingClientRect();
+      if (y >= rect.top && y <= rect.bottom) {
+        overId = block.dataset.infoId;
+        break;
+      }
+    }
+    if (overId && overId !== dragOverId) setDragOverId(overId);
+  }
+
+  function handlePointerUpDrag() {
+    if (draggingId && dragOverId && draggingId !== dragOverId) {
+      const fromIdx = items.findIndex((i) => i.id === draggingId);
+      const toIdx = items.findIndex((i) => i.id === dragOverId);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const reordered = [...items];
+        const [moved] = reordered.splice(fromIdx, 1);
+        reordered.splice(toIdx, 0, moved);
+        onItemsChange(reordered);
+        haptic.tap();
+        reorderImportantInfo(reordered.map((i) => i.id)).then(onItemsChange);
+      }
+    }
+    setDraggingId(null);
+    setDragOverId(null);
+  }
 
   async function handleAddSave() {
     if (!newTitle.trim()) return;
@@ -459,10 +513,16 @@ function ImportantInfoCard({ items, onItemsChange }) {
         <div className="empty-state">Rien pour l'instant. Ajoute des infos utiles pour la famille (comment ouvrir le toit, où est la clé du gaz…).</div>
       )}
 
+      <div ref={listRef}>
       {items.map((item) => {
         const isEditing = editingId === item.id;
+        const isCollapsed = collapsedIds.has(item.id);
         return (
-          <div key={item.id} className="info-block">
+          <div
+            key={item.id}
+            data-info-id={item.id}
+            className={`info-block${dragOverId === item.id && draggingId !== item.id ? ' drag-over' : ''}${draggingId === item.id ? ' dragging' : ''}`}
+          >
             {isEditing ? (
               <div className="info-edit-form">
                 <input
@@ -481,7 +541,24 @@ function ImportantInfoCard({ items, onItemsChange }) {
             ) : (
               <>
                 <div className="info-block-header">
-                  <div className="info-block-title">{item.title}</div>
+                  <span
+                    className="info-drag-handle"
+                    title="Glisser pour réordonner"
+                    onPointerDown={(e) => handlePointerDownDrag(e, item.id)}
+                    onPointerMove={handlePointerMoveDrag}
+                    onPointerUp={handlePointerUpDrag}
+                    onPointerCancel={handlePointerUpDrag}
+                  >
+                    ⠿
+                  </span>
+                  <button
+                    className="info-block-title info-block-title-btn"
+                    onClick={() => toggleCollapsed(item.id)}
+                    aria-expanded={!isCollapsed}
+                  >
+                    <span className={`info-chevron${isCollapsed ? ' collapsed' : ''}`}>▾</span>
+                    {item.title}
+                  </button>
                   <div className="info-block-actions">
                     <button
                       className="btn small"
@@ -497,30 +574,39 @@ function ImportantInfoCard({ items, onItemsChange }) {
                     <button className="btn small" aria-label="Supprimer" onClick={() => handleDelete(item.id)}>🗑</button>
                   </div>
                 </div>
-                {item.body && <div className="info-block-body" dangerouslySetInnerHTML={{ __html: item.body }} />}
-                <div className="info-photo-row">
-                  {item.photo_url && (
-                    <button type="button" className="info-photo-link" onClick={() => setLightbox(item.photo_url)}>
-                      <img src={item.photo_url} alt="" className="info-photo-thumb" />
-                      <span>Voir la photo</span>
-                    </button>
-                  )}
-                  <label className="info-photo-upload">
-                    {uploadingId === item.id ? 'Envoi…' : item.photo_url ? 'Changer la photo' : '+ Ajouter une photo'}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      disabled={uploadingId === item.id}
-                      onChange={(e) => handlePhoto(item.id, e.target.files[0])}
-                    />
-                  </label>
-                </div>
+                {!isCollapsed && (
+                  <>
+                    {item.body && (
+                      <div className="info-block-body-box">
+                        <div className="info-block-body" dangerouslySetInnerHTML={{ __html: item.body }} />
+                      </div>
+                    )}
+                    <div className="info-photo-row">
+                      {item.photo_url && (
+                        <button type="button" className="info-photo-link" onClick={() => setLightbox(item.photo_url)}>
+                          <img src={item.photo_url} alt="" className="info-photo-thumb" />
+                          <span>Voir la photo</span>
+                        </button>
+                      )}
+                      <label className="info-photo-upload">
+                        {uploadingId === item.id ? 'Envoi…' : item.photo_url ? 'Changer la photo' : '+ Ajouter une photo'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          hidden
+                          disabled={uploadingId === item.id}
+                          onChange={(e) => handlePhoto(item.id, e.target.files[0])}
+                        />
+                      </label>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
         );
       })}
+      </div>
 
       {lightbox && (
         <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
