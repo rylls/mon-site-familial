@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { updateMember, addMember, deleteMember } from '../actions';
 import Avatar from './Avatar';
 import { haptic } from '../lib/haptics';
+import { APP_VERSION, LAST_UPDATED } from '../lib/appInfo';
 
 const PRESET_COLORS = ['#C67853', '#7A93A6', '#E3A83B', '#5B7B62', '#C1622D', '#6E8F57', '#5E84A6', '#9B6B9E'];
 const PRESET_ICONS = ['🚐', '⛺', '🏔️', '🌲', '🧭', '🔥', '🌞', '🐶', '🥾', '😎', '🚴', '📸', '⭐', '👑'];
@@ -198,6 +199,10 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
         <button className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={onClose}>
           Fermer
         </button>
+
+        <div className="settings-version">
+          Wouchi v{APP_VERSION} · mis à jour le {new Date(LAST_UPDATED).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
       </div>
     </div>
   );

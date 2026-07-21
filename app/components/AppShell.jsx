@@ -17,6 +17,7 @@ import SideDoodles from './decor/SideDoodles';
 import { PineTreeIcon } from './decor/DoodleIcons';
 import { buildActivity } from '../lib/activity';
 import { getMaintenanceStatus } from '../lib/maintenance';
+import { parseDate, startOfToday } from '../lib/dates';
 import { haptic } from '../lib/haptics';
 
 const COOKIE_NAME = 'van_profile';
@@ -63,6 +64,9 @@ function AppShellInner({
 
   const allActivity = buildActivity({ bookings, comments, inventory, members });
   const activity = activityClearedAt ? allActivity.filter((a) => a.timestamp > activityClearedAt) : allActivity;
+
+  const today = startOfToday();
+  const isVanOut = bookings.some((b) => parseDate(b.start_date) <= today && today <= parseDate(b.end_date));
 
   const currentKm = mileageLogs[0]?.km ?? null;
   const maintenanceDueCount = maintenanceItems.filter((item) => {
@@ -115,6 +119,10 @@ function AppShellInner({
             <p>Interface de réservation</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className={`van-status-pill${isVanOut ? ' out' : ''}`}>
+              {isVanOut ? '🚐' : '✅'}
+              <span>{isVanOut ? 'En vadrouille' : 'Van disponible'}</span>
+            </span>
             {maintenanceDueCount > 0 && (
               <button
                 className="header-maint-pill"

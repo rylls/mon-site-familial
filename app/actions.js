@@ -231,16 +231,20 @@ export async function clearActivity() {
 }
 
 export async function getImportantInfo() {
-  const { data, error } = await supabaseAdmin
-    .from('important_info')
-    .select('*')
-    .order('position', { ascending: true })
-    .order('created_at', { ascending: true });
-  if (error) {
-    console.error('getImportantInfo failed (has the migration run?):', error.message);
-    return [];
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await supabaseAdmin
+      .from('important_info')
+      .select('*')
+      .order('position', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (!error) return data;
+    lastError = error;
+    console.error(`getImportantInfo attempt ${attempt + 1} failed:`, error.message);
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
   }
-  return data;
+  console.error('getImportantInfo giving up after retries:', lastError?.message);
+  return [];
 }
 
 export async function addImportantInfo({ title, body }) {

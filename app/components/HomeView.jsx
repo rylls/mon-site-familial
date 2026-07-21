@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 're
 import Avatar from './Avatar';
 import { addImportantInfo, updateImportantInfo, deleteImportantInfo, uploadImportantInfoPhoto, reorderImportantInfo } from '../actions';
 import { parseDate, formatRange, startOfToday, fmtDate } from '../lib/dates';
-import { fetchDailyWeather, weatherEmoji } from '../lib/weather';
+import { fetchDailyWeather, weatherEmoji, DEFAULT_LOCATION_NAME } from '../lib/weather';
 import { getMaintenanceStatus, STATUS_ORDER } from '../lib/maintenance';
 import { haptic } from '../lib/haptics';
 
@@ -180,7 +180,7 @@ function WeatherCard({ nextTrip }) {
 
   return (
     <div className="home-card weather-card">
-      <div className="home-card-title">Météo au départ</div>
+      <div className="home-card-title">Météo au départ · {DEFAULT_LOCATION_NAME}</div>
       {weather === undefined ? (
         <div className="weather-loading">…</div>
       ) : (

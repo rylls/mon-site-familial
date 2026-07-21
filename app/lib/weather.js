@@ -15,6 +15,7 @@ export function weatherEmoji(code) {
 // Coordonnées par défaut (France) — à ajuster si le van change de région.
 const DEFAULT_LAT = 47.2184;
 const DEFAULT_LON = -1.5536;
+export const DEFAULT_LOCATION_NAME = 'Nantes';
 
 export async function fetchDailyWeather(dateISO, lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   try {
