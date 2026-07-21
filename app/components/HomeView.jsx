@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import Avatar from './Avatar';
 import { addImportantInfo, updateImportantInfo, deleteImportantInfo, uploadImportantInfoPhoto } from '../actions';
 import { parseDate, formatRange, startOfToday, fmtDate } from '../lib/dates';
@@ -32,6 +32,127 @@ function compressImage(file, maxDim = 1600, quality = 0.82) {
     img.src = url;
   });
 }
+
+const RTE_COLORS = ['#3B2B1D', '#C1622D', '#6E8F57', '#5E84A6', '#E0A83E', '#C0453A'];
+const RTE_FONTS = [
+  { label: 'Standard', value: 'Quicksand' },
+  { label: 'Manuscrite', value: 'Caveat' },
+  { label: 'Doodle', value: "'Patrick Hand'" },
+];
+const RTE_ALLOWED_TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'UL', 'OL', 'LI', 'BR', 'DIV', 'SPAN', 'P']);
+const RTE_ALLOWED_STYLE_PROPS = new Set(['color', 'font-family']);
+
+function sanitizeHtml(html) {
+  if (typeof window === 'undefined' || !html) return '';
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  function clean(node) {
+    Array.from(node.childNodes).forEach((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (!RTE_ALLOWED_TAGS.has(child.tagName)) {
+          while (child.firstChild) node.insertBefore(child.firstChild, child);
+          node.removeChild(child);
+          return;
+        }
+        Array.from(child.attributes).forEach((attr) => {
+          if (child.tagName === 'SPAN' && attr.name === 'style') {
+            const cleanedStyle = attr.value
+              .split(';')
+              .map((s) => s.trim())
+              .filter(Boolean)
+              .filter((decl) => RTE_ALLOWED_STYLE_PROPS.has(decl.split(':')[0].trim().toLowerCase()))
+              .join('; ');
+            if (cleanedStyle) child.setAttribute('style', cleanedStyle);
+            else child.removeAttribute('style');
+          } else {
+            child.removeAttribute(attr.name);
+          }
+        });
+        clean(child);
+      } else if (child.nodeType !== Node.TEXT_NODE) {
+        node.removeChild(child);
+      }
+    });
+  }
+  clean(doc.body);
+  return doc.body.innerHTML;
+}
+
+const RichTextEditor = forwardRef(function RichTextEditor({ initialHtml }, ref) {
+  const editorRef = useRef(null);
+
+  useEffect(() => {
+    if (editorRef.current) editorRef.current.innerHTML = initialHtml || '';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    getHTML: () => sanitizeHtml(editorRef.current?.innerHTML || ''),
+  }));
+
+  function exec(cmd) {
+    editorRef.current?.focus();
+    document.execCommand(cmd);
+  }
+
+  function applyStyle(styleObj) {
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    Object.assign(span.style, styleObj);
+    try {
+      range.surroundContents(span);
+    } catch {
+      const contents = range.extractContents();
+      span.appendChild(contents);
+      range.insertNode(span);
+    }
+    sel.removeAllRanges();
+  }
+
+  return (
+    <div className="rte">
+      <div className="rte-toolbar">
+        <button type="button" className="rte-btn" title="Gras" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('bold')}>
+          <b>G</b>
+        </button>
+        <button type="button" className="rte-btn" title="Liste à tirets" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('insertUnorderedList')}>
+          ≡
+        </button>
+        <span className="rte-sep" />
+        {RTE_COLORS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className="rte-color"
+            style={{ background: c }}
+            title="Couleur du texte"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => applyStyle({ color: c })}
+          />
+        ))}
+        <span className="rte-sep" />
+        <select
+          className="rte-font"
+          defaultValue=""
+          onMouseDown={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            if (e.target.value) applyStyle({ fontFamily: e.target.value });
+            e.target.value = '';
+          }}
+        >
+          <option value="">Police…</option>
+          {RTE_FONTS.map((f) => (
+            <option key={f.value} value={f.value}>{f.label}</option>
+          ))}
+        </select>
+      </div>
+      <div ref={editorRef} className="rte-content" contentEditable suppressContentEditableWarning />
+    </div>
+  );
+});
 
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -248,21 +369,24 @@ function StatsCard({ bookings, mileageLogs, members }) {
 
 function ImportantInfoCard({ items, onItemsChange }) {
   const [adding, setAdding] = useState(false);
-  const [newDraft, setNewDraft] = useState({ title: '', body: '' });
+  const [newTitle, setNewTitle] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [drafts, setDrafts] = useState({});
+  const [editTitle, setEditTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
   const [lightbox, setLightbox] = useState(null);
+  const newBodyRef = useRef(null);
+  const editBodyRef = useRef(null);
 
   async function handleAddSave() {
-    if (!newDraft.title.trim()) return;
+    if (!newTitle.trim()) return;
     haptic.success();
     setSaving(true);
     try {
-      const updated = await addImportantInfo({ title: newDraft.title.trim(), body: newDraft.body.trim() });
+      const body = newBodyRef.current?.getHTML() || '';
+      const updated = await addImportantInfo({ title: newTitle.trim(), body });
       onItemsChange(updated);
-      setNewDraft({ title: '', body: '' });
+      setNewTitle('');
       setAdding(false);
     } finally {
       setSaving(false);
@@ -270,12 +394,12 @@ function ImportantInfoCard({ items, onItemsChange }) {
   }
 
   async function handleEditSave(id) {
-    const d = drafts[id];
-    if (!d || !d.title.trim()) return;
+    if (!editTitle.trim()) return;
     haptic.success();
     setSaving(true);
     try {
-      const updated = await updateImportantInfo(id, { title: d.title.trim(), body: d.body.trim() });
+      const body = editBodyRef.current?.getHTML() || '';
+      const updated = await updateImportantInfo(id, { title: editTitle.trim(), body });
       onItemsChange(updated);
       setEditingId(null);
     } finally {
@@ -321,15 +445,11 @@ function ImportantInfoCard({ items, onItemsChange }) {
           <input
             type="text"
             placeholder="Titre (ex : Comment ouvrir le toit ?)"
-            value={newDraft.title}
-            onChange={(e) => setNewDraft((p) => ({ ...p, title: e.target.value }))}
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
           />
-          <textarea
-            placeholder="Explication…"
-            value={newDraft.body}
-            onChange={(e) => setNewDraft((p) => ({ ...p, body: e.target.value }))}
-          />
-          <button className="btn small primary" disabled={!newDraft.title.trim() || saving} onClick={handleAddSave}>
+          <RichTextEditor ref={newBodyRef} initialHtml="" />
+          <button className="btn small primary" disabled={!newTitle.trim() || saving} onClick={handleAddSave}>
             {saving ? '…' : 'Enregistrer'}
           </button>
         </div>
@@ -341,20 +461,16 @@ function ImportantInfoCard({ items, onItemsChange }) {
 
       {items.map((item) => {
         const isEditing = editingId === item.id;
-        const draft = drafts[item.id] || { title: item.title, body: item.body || '' };
         return (
           <div key={item.id} className="info-block">
             {isEditing ? (
               <div className="info-edit-form">
                 <input
                   type="text"
-                  value={draft.title}
-                  onChange={(e) => setDrafts((p) => ({ ...p, [item.id]: { ...draft, title: e.target.value } }))}
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
                 />
-                <textarea
-                  value={draft.body}
-                  onChange={(e) => setDrafts((p) => ({ ...p, [item.id]: { ...draft, body: e.target.value } }))}
-                />
+                <RichTextEditor key={item.id} ref={editBodyRef} initialHtml={item.body || ''} />
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button className="btn small primary" disabled={saving} onClick={() => handleEditSave(item.id)}>
                     {saving ? '…' : 'Enregistrer'}
@@ -372,7 +488,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
                       aria-label="Modifier"
                       onClick={() => {
                         haptic.tap();
-                        setDrafts((p) => ({ ...p, [item.id]: { title: item.title, body: item.body || '' } }));
+                        setEditTitle(item.title);
                         setEditingId(item.id);
                       }}
                     >
@@ -381,7 +497,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
                     <button className="btn small" aria-label="Supprimer" onClick={() => handleDelete(item.id)}>🗑</button>
                   </div>
                 </div>
-                {item.body && <div className="info-block-body">{item.body}</div>}
+                {item.body && <div className="info-block-body" dangerouslySetInnerHTML={{ __html: item.body }} />}
                 <div className="info-photo-row">
                   {item.photo_url && (
                     <button type="button" className="info-photo-link" onClick={() => setLightbox(item.photo_url)}>
