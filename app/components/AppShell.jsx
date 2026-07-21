@@ -197,6 +197,8 @@ function AppShellInner({
             members={members}
             inventory={inventory}
             mileageLogs={mileageLogs}
+            maintenanceItems={maintenanceItems}
+            currentKm={currentKm}
             importantInfo={importantInfo}
             onImportantInfoChange={setImportantInfo}
             currentMember={currentMember}
