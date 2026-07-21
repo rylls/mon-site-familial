@@ -219,6 +219,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
   const [drafts, setDrafts] = useState({});
   const [saving, setSaving] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
+  const [lightbox, setLightbox] = useState(null);
 
   async function handleAddSave() {
     if (!newDraft.title.trim()) return;
@@ -347,22 +348,36 @@ function ImportantInfoCard({ items, onItemsChange }) {
                   </div>
                 </div>
                 {item.body && <div className="info-block-body">{item.body}</div>}
-                {item.photo_url && <img src={item.photo_url} alt={item.title} className="info-block-photo" />}
-                <label className="info-photo-upload">
-                  {uploadingId === item.id ? 'Envoi…' : item.photo_url ? 'Changer la photo' : '+ Ajouter une photo'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    disabled={uploadingId === item.id}
-                    onChange={(e) => handlePhoto(item.id, e.target.files[0])}
-                  />
-                </label>
+                <div className="info-photo-row">
+                  {item.photo_url && (
+                    <button type="button" className="info-photo-link" onClick={() => setLightbox(item.photo_url)}>
+                      <img src={item.photo_url} alt="" className="info-photo-thumb" />
+                      <span>Voir la photo</span>
+                    </button>
+                  )}
+                  <label className="info-photo-upload">
+                    {uploadingId === item.id ? 'Envoi…' : item.photo_url ? 'Changer la photo' : '+ Ajouter une photo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      disabled={uploadingId === item.id}
+                      onChange={(e) => handlePhoto(item.id, e.target.files[0])}
+                    />
+                  </label>
+                </div>
               </>
             )}
           </div>
         );
       })}
+
+      {lightbox && (
+        <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
+          <img src={lightbox} alt="" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
+          <button className="lightbox-close" onClick={() => setLightbox(null)} aria-label="Fermer">✕</button>
+        </div>
+      )}
     </div>
   );
 }
