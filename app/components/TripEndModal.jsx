@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { updateInventoryLevel, addMileageLog, ackTripEnd } from '../actions';
 import { ZONES, ZONE_LABELS } from './zones';
 import { haptic } from '../lib/haptics';
+import { useToast } from './ToastProvider';
 
 const LEVELS = ['vide', 'partiel', 'plein'];
 
 export default function TripEndModal({ items, onItemsChange, currentMember, booking, currentKm, onMileageLogsChange, onBookingsChange, onClose }) {
+  const showToast = useToast();
   const [drafts, setDrafts] = useState(Object.fromEntries(items.map((i) => [i.id, i.level])));
   const [collapsed, setCollapsed] = useState({});
   const [saving, setSaving] = useState(false);
@@ -38,6 +40,7 @@ export default function TripEndModal({ items, onItemsChange, currentMember, book
     await Promise.all(tasks);
     haptic.success();
     onItemsChange(items.map((i) => ({ ...i, level: drafts[i.id] })));
+    showToast('Merci, le van est à jour ! 🚐');
     setSaving(false);
     onClose();
   }

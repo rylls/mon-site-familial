@@ -13,6 +13,7 @@ import MaintenanceView from './MaintenanceView';
 import TripEndModal from './TripEndModal';
 import NotificationBell from './NotificationBell';
 import IdeaBox from './IdeaBox';
+import { ToastProvider } from './ToastProvider';
 import Mountains from './decor/Mountains';
 import SideDoodles from './decor/SideDoodles';
 import { PineTreeIcon } from './decor/DoodleIcons';
@@ -327,8 +328,10 @@ function AppShellInner({
 
 export default function AppShell(props) {
   return (
-    <Suspense fallback={null}>
-      <AppShellInner {...props} />
-    </Suspense>
+    <ToastProvider>
+      <Suspense fallback={null}>
+        <AppShellInner {...props} />
+      </Suspense>
+    </ToastProvider>
   );
 }

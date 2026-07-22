@@ -4,6 +4,7 @@ import { updateMember, addMember, deleteMember } from '../actions';
 import Avatar from './Avatar';
 import { haptic } from '../lib/haptics';
 import { APP_VERSION, LAST_UPDATED } from '../lib/appInfo';
+import { useToast } from './ToastProvider';
 
 const PRESET_COLORS = ['#C67853', '#7A93A6', '#E3A83B', '#5B7B62', '#C1622D', '#6E8F57', '#5E84A6', '#9B6B9E'];
 const PRESET_ICONS = ['🚐', '⛺', '🏔️', '🌲', '🧭', '🔥', '🌞', '🐶', '🥾', '😎', '🚴', '📸', '⭐', '👑'];
@@ -14,6 +15,7 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
   const [deletingId, setDeletingId] = useState(null);
   const [newMember, setNewMember] = useState({ name: '', role: 'enfant', color: PRESET_COLORS[0], icon: null });
   const [adding, setAdding] = useState(false);
+  const showToast = useToast();
 
   function updateDraft(m, patch) {
     setDrafts((prev) => {
@@ -29,6 +31,7 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
     setSavingId(id);
     const updated = await updateMember(id, { name: draft.name.trim(), color: draft.color, role: draft.role, icon: draft.icon });
     onMembersChange(updated);
+    showToast('Profil mis à jour');
     setSavingId(null);
   }
 
@@ -41,6 +44,7 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
       onMembersChange(updatedMembers);
       onBookingsChange?.(bookings);
       onCommentsChange?.(comments);
+      showToast(`Profil "${name}" supprimé`, { type: 'danger' });
     } catch (e) {
       alert('Impossible de supprimer ce profil.');
     }
@@ -54,6 +58,7 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
     try {
       const updated = await addMember({ name: newMember.name.trim(), role: newMember.role, color: newMember.color, icon: newMember.icon });
       onMembersChange(updated);
+      showToast(`Profil "${newMember.name.trim()}" créé`);
       setNewMember({ name: '', role: 'enfant', color: PRESET_COLORS[0], icon: null });
     } finally {
       setAdding(false);

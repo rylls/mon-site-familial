@@ -5,6 +5,7 @@ import { ZONES, ZONE_LABELS } from './zones';
 import VanDiagram from './VanDiagram';
 import CommentThread from './CommentThread';
 import { haptic } from '../lib/haptics';
+import { useToast } from './ToastProvider';
 
 const LEVELS = ['vide', 'partiel', 'plein'];
 const LEVEL_TEXT = { vide: 'vide', partiel: 'partiel', plein: 'plein' };
@@ -13,6 +14,7 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
   const [zone, setZone] = useState(ZONES[0].id);
   const [newName, setNewName] = useState('');
   const [filling, setFilling] = useState(false);
+  const showToast = useToast();
 
   const zoneItems = items.filter((i) => i.zone === zone);
   const zoneNotFull = zoneItems.filter((i) => i.level !== 'plein').length;
@@ -28,13 +30,16 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
     haptic.success();
     const updated = await addInventoryItem({ zone, name: newName.trim() });
     onItemsChange(updated);
+    showToast('Objet ajouté');
     setNewName('');
   }
 
-  async function handleDelete(id) {
+  async function handleDelete(id, name) {
+    if (!confirm(`Supprimer "${name}" de l'inventaire ?`)) return;
     haptic.delete();
     const updated = await deleteInventoryItem(id);
     onItemsChange(updated);
+    showToast('Objet supprimé', { type: 'danger' });
   }
 
   async function handleFillZone() {
@@ -43,6 +48,7 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
     const updated = await bulkFillZone(zone, currentMember?.id);
     onItemsChange(updated);
     setFilling(false);
+    showToast(`Zone ${ZONE_LABELS[zone]} remplie ✅`);
   }
 
   return (
@@ -100,7 +106,7 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
                 />
               ))}
             </div>
-            <button className="item-del" aria-label="Supprimer l'objet" onClick={() => handleDelete(item.id)}>✕</button>
+            <button className="item-del" aria-label="Supprimer l'objet" onClick={() => handleDelete(item.id, item.name)}>✕</button>
           </div>
           <CommentThread
             targetType="inventory_item"

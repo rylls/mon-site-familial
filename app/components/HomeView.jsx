@@ -6,6 +6,7 @@ import { parseDate, formatRange, startOfToday, fmtDate } from '../lib/dates';
 import { fetchDailyWeather, weatherEmoji, DEFAULT_LOCATION_NAME, getStoredLocation, refreshLocation } from '../lib/weather';
 import { getMaintenanceStatus, STATUS_ORDER } from '../lib/maintenance';
 import { haptic } from '../lib/haptics';
+import { useToast } from './ToastProvider';
 
 function compressImage(file, maxDim = 1600, quality = 0.82) {
   return new Promise((resolve, reject) => {
@@ -168,6 +169,7 @@ function WeatherCard({ trip, isActive }) {
   const [location, setLocation] = useState(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState(false);
+  const showToast = useToast();
 
   const weatherDate = trip ? (isActive ? fmtDate(startOfToday()) : fmtDate(parseDate(trip.start_date))) : null;
 
@@ -192,6 +194,7 @@ function WeatherCard({ trip, isActive }) {
     try {
       const loc = await refreshLocation();
       setLocation(loc);
+      showToast(`Localisation mise à jour · ${loc.name}`);
     } catch {
       setLocError(true);
     } finally {
@@ -417,6 +420,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
   const editBodyRef = useRef(null);
   const listRef = useRef(null);
   const initedCollapseRef = useRef(false);
+  const showToast = useToast();
 
   useEffect(() => {
     if (initedCollapseRef.current) return;
@@ -483,6 +487,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
       const body = newBodyRef.current?.getHTML() || '';
       const updated = await addImportantInfo({ title: newTitle.trim(), body });
       onItemsChange(updated);
+      showToast('Bloc ajouté');
       setNewTitle('');
       setAdding(false);
     } finally {
@@ -498,6 +503,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
       const body = editBodyRef.current?.getHTML() || '';
       const updated = await updateImportantInfo(id, { title: editTitle.trim(), body });
       onItemsChange(updated);
+      showToast('Bloc modifié');
       setEditingId(null);
     } finally {
       setSaving(false);
@@ -509,6 +515,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
     haptic.delete();
     const updated = await deleteImportantInfo(id);
     onItemsChange(updated);
+    showToast('Bloc supprimé', { type: 'danger' });
   }
 
   async function handlePhoto(id, file) {

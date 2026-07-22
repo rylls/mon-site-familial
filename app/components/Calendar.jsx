@@ -6,6 +6,7 @@ import Avatar from './Avatar';
 import CommentThread from './CommentThread';
 import { MiniVanIcon, TicketPathIcon } from './decor/DoodleIcons';
 import { haptic } from '../lib/haptics';
+import { useToast } from './ToastProvider';
 
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 const WEEKDAY_NAMES = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
@@ -19,6 +20,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   const [memberId, setMemberId] = useState(currentMember?.id || members[0]?.id);
   const [editingId, setEditingId] = useState(null);
   const sheetRef = useRef(null);
+  const showToast = useToast();
 
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const today = startOfToday();
@@ -67,18 +69,22 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
 
   async function handleConfirm() {
     if (!start || !memberId) return;
+    const wasEditing = !!editingId;
     const updated = editingId
       ? await editBooking(editingId, { start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note })
       : await addBooking({ member_id: memberId, start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note });
     haptic.success();
     onBookingsChange(updated);
+    showToast(wasEditing ? 'Trajet modifié' : 'Trajet réservé 🚐');
     clearSelection();
   }
 
   async function handleDelete(id) {
+    if (!confirm('Supprimer ce trajet ? Les commentaires associés seront aussi supprimés.')) return;
     haptic.delete();
     const updated = await deleteBooking(id);
     onBookingsChange(updated);
+    showToast('Trajet supprimé', { type: 'danger' });
     if (editingId === id) clearSelection();
   }
 

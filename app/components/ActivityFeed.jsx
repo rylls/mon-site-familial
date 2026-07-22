@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Avatar from './Avatar';
 import { clearActivity } from '../actions';
 import { haptic } from '../lib/haptics';
+import { useToast } from './ToastProvider';
 
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -15,6 +16,7 @@ function timeAgo(iso) {
 
 export default function ActivityFeed({ activity, onClear }) {
   const [clearing, setClearing] = useState(false);
+  const showToast = useToast();
 
   async function handleClear() {
     if (!confirm('Effacer tout l\'historique d\'activité affiché ? Les réservations, commentaires et objets restent inchangés.')) return;
@@ -22,6 +24,7 @@ export default function ActivityFeed({ activity, onClear }) {
     haptic.warning();
     const clearedAt = await clearActivity();
     onClear(clearedAt);
+    showToast('Historique effacé');
     setClearing(false);
   }
 

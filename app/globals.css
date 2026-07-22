@@ -254,6 +254,29 @@ input::placeholder{ color:var(--ink-faint); }
 .notif-item-text{ font-size:12.5px; color:var(--ink-soft); margin-top:1px; }
 .notif-item-action{ margin-top:8px; }
 
+/* ---------- Toast feedback ---------- */
+.toast-stack{
+  position:fixed; left:50%; bottom:24px; transform:translateX(-50%);
+  z-index:3000; display:flex; flex-direction:column-reverse; gap:8px;
+  align-items:center; pointer-events:none; width:100%; padding:0 16px;
+}
+.toast{
+  pointer-events:auto;
+  max-width:420px;
+  background:var(--ink); color:#fff;
+  font-size:13.5px; font-weight:650;
+  padding:11px 18px; border-radius:980px;
+  box-shadow:var(--shadow-lg);
+  animation:toastIn .22s ease-out;
+  text-align:center;
+}
+.toast-danger{ background:var(--vide); }
+.toast-success{ background:var(--sage); }
+@keyframes toastIn{
+  from{ opacity:0; transform:translateY(10px) scale(.96); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
 /* ---------- Idea box (floating lightbulb) ---------- */
 .idea-fab{
   position:fixed; right:20px; bottom:20px; z-index:45;

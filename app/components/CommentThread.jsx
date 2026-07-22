@@ -30,6 +30,7 @@ export default function CommentThread({ targetType, targetId, comments, members,
   }
 
   async function handleDelete(id) {
+    if (!confirm('Supprimer ce commentaire ?')) return;
     haptic.delete();
     const updated = await deleteComment(id);
     onCommentsChange(updated);

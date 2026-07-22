@@ -4,6 +4,7 @@ import Avatar from './Avatar';
 import { LightbulbIcon } from './decor/DoodleIcons';
 import { addIdea, validateIdea, deleteIdea } from '../actions';
 import { haptic } from '../lib/haptics';
+import { useToast } from './ToastProvider';
 
 export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }) {
   const [open, setOpen] = useState(false);
@@ -11,6 +12,7 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
   const [saving, setSaving] = useState(false);
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const canModerate = currentMember?.id === 'vincent';
+  const showToast = useToast();
 
   const pending = ideas.filter((i) => i.status !== 'validated');
   const validated = ideas.filter((i) => i.status === 'validated');
@@ -22,6 +24,7 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
     haptic.tap();
     const updated = await addIdea({ member_id: currentMember.id, text: trimmed });
     onIdeasChange(updated);
+    showToast('Idée envoyée 💡');
     setText('');
     setSaving(false);
   }
@@ -29,11 +32,14 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
   async function handleValidate(id) {
     haptic.success();
     onIdeasChange(await validateIdea(id));
+    showToast('Idée validée ✅');
   }
 
   async function handleDelete(id) {
+    if (!confirm('Supprimer cette idée ?')) return;
     haptic.tap();
     onIdeasChange(await deleteIdea(id));
+    showToast('Idée supprimée', { type: 'danger' });
   }
 
   function renderIdea(idea) {

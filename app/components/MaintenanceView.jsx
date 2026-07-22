@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { addMileageLog, updateMaintenanceItem, markMaintenanceDone, addMaintenanceItem, deleteMaintenanceItem } from '../actions';
 import { getMaintenanceStatus, STATUS_LABELS, STATUS_ORDER } from '../lib/maintenance';
 import { haptic } from '../lib/haptics';
+import { useToast } from './ToastProvider';
 
 function fmtDate(d) {
   if (!d) return null;
@@ -19,6 +20,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
   const [draft, setDraft] = useState({});
   const [addingNew, setAddingNew] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', interval_km: '', interval_months: '', notes: '' });
+  const showToast = useToast();
 
   const currentKm = mileageLogs[0]?.km ?? null;
   const currentKmDate = mileageLogs[0]?.recorded_at ?? null;
@@ -33,6 +35,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
     haptic.success();
     const updated = await addMileageLog({ km, recorded_by: currentMember?.id });
     onMileageLogsChange(updated);
+    showToast(`Kilométrage mis à jour · ${km.toLocaleString('fr-FR')} km`);
     setNewKm('');
   }
 
@@ -66,6 +69,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
     haptic.success();
     const updated = await markMaintenanceDone(id, { km: currentKm, date: new Date().toISOString().slice(0, 10) });
     onMaintenanceItemsChange(updated);
+    showToast('Entretien marqué comme fait ✅');
   }
 
   async function handleDelete(id) {
@@ -73,6 +77,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
     haptic.delete();
     const updated = await deleteMaintenanceItem(id);
     onMaintenanceItemsChange(updated);
+    showToast('Poste supprimé', { type: 'danger' });
   }
 
   async function handleAddItem() {
@@ -85,6 +90,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
       notes: newItem.notes || null,
     });
     onMaintenanceItemsChange(updated);
+    showToast('Poste d\'entretien ajouté');
     setNewItem({ name: '', interval_km: '', interval_months: '', notes: '' });
     setAddingNew(false);
   }
