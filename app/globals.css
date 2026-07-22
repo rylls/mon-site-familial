@@ -369,7 +369,7 @@ input::placeholder{ color:var(--ink-faint); }
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   display:flex; align-items:center; justify-content:center;
-  z-index:50;
+  z-index:2000;
   padding:20px;
 }
 .picker-card{
