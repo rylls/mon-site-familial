@@ -220,7 +220,13 @@ function WeatherCard({ trip, isActive }) {
       </div>
       {locError && <div className="weather-loc-error">Localisation indisponible. Vérifie les autorisations.</div>}
       {weather === undefined ? (
-        <div className="weather-loading">…</div>
+        <div className="weather-body">
+          <span className="skeleton skeleton-circle" />
+          <div>
+            <div className="skeleton skeleton-line" style={{ width: '64px', height: '16px' }} />
+            <div className="skeleton skeleton-line" style={{ width: '48px', height: '11px', marginTop: '6px' }} />
+          </div>
+        </div>
       ) : (
         <div className="weather-body">
           <span className="weather-emoji">{weatherEmoji(weather.code)}</span>
@@ -421,6 +427,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
   const listRef = useRef(null);
   const initedCollapseRef = useRef(false);
   const showToast = useToast();
+  const deleteTimersRef = useRef({});
 
   useEffect(() => {
     if (initedCollapseRef.current) return;
@@ -510,12 +517,24 @@ function ImportantInfoCard({ items, onItemsChange }) {
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Supprimer ce bloc d\'information ?')) return;
+  function handleDelete(id) {
     haptic.delete();
-    const updated = await deleteImportantInfo(id);
-    onItemsChange(updated);
-    showToast('Bloc supprimé', { type: 'danger' });
+    const snapshot = items;
+    onItemsChange(items.filter((i) => i.id !== id));
+    showToast('Bloc supprimé', {
+      type: 'danger',
+      duration: 5000,
+      actionLabel: 'Annuler',
+      onAction: () => {
+        clearTimeout(deleteTimersRef.current[id]);
+        delete deleteTimersRef.current[id];
+        onItemsChange(snapshot);
+      },
+    });
+    deleteTimersRef.current[id] = setTimeout(async () => {
+      delete deleteTimersRef.current[id];
+      onItemsChange(await deleteImportantInfo(id));
+    }, 5000);
   }
 
   async function handlePhoto(id, file) {

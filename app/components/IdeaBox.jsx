@@ -1,7 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Avatar from './Avatar';
 import { LightbulbIcon } from './decor/DoodleIcons';
+import SwipeableRow from './SwipeableRow';
 import { addIdea, validateIdea, deleteIdea } from '../actions';
 import { haptic } from '../lib/haptics';
 import { useToast } from './ToastProvider';
@@ -13,6 +14,7 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const canModerate = currentMember?.id === 'vincent';
   const showToast = useToast();
+  const deleteTimersRef = useRef({});
 
   const pending = ideas.filter((i) => i.status !== 'validated');
   const validated = ideas.filter((i) => i.status === 'validated');
@@ -35,17 +37,30 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
     showToast('Idée validée ✅');
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Supprimer cette idée ?')) return;
+  function handleDelete(id) {
     haptic.tap();
-    onIdeasChange(await deleteIdea(id));
-    showToast('Idée supprimée', { type: 'danger' });
+    const snapshot = ideas;
+    onIdeasChange(ideas.filter((i) => i.id !== id));
+    showToast('Idée supprimée', {
+      type: 'danger',
+      duration: 5000,
+      actionLabel: 'Annuler',
+      onAction: () => {
+        clearTimeout(deleteTimersRef.current[id]);
+        delete deleteTimersRef.current[id];
+        onIdeasChange(snapshot);
+      },
+    });
+    deleteTimersRef.current[id] = setTimeout(async () => {
+      delete deleteTimersRef.current[id];
+      onIdeasChange(await deleteIdea(id));
+    }, 5000);
   }
 
   function renderIdea(idea) {
     const author = memberById[idea.member_id];
-    return (
-      <div key={idea.id} className={`idea-item${idea.status === 'validated' ? ' validated' : ''}`}>
+    const row = (
+      <div className={`idea-item${idea.status === 'validated' ? ' validated' : ''}`}>
         <Avatar member={author} size="xs" />
         <div className="idea-item-body">
           <div className="idea-item-text">{idea.text}</div>
@@ -60,6 +75,18 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
           </div>
         )}
       </div>
+    );
+    if (!canModerate) return <div key={idea.id}>{row}</div>;
+    return (
+      <SwipeableRow
+        key={idea.id}
+        onSwipeLeft={() => handleDelete(idea.id)}
+        leftLabel="🗑 Supprimer"
+        onSwipeRight={idea.status !== 'validated' ? () => handleValidate(idea.id) : undefined}
+        rightLabel="✅ Valider"
+      >
+        {row}
+      </SwipeableRow>
     );
   }
 

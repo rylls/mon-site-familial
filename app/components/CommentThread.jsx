@@ -1,8 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { addComment, deleteComment } from '../actions';
 import Avatar from './Avatar';
 import { haptic } from '../lib/haptics';
+import { useToast } from './ToastProvider';
 
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -16,6 +17,8 @@ export default function CommentThread({ targetType, targetId, comments, members,
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
+  const showToast = useToast();
+  const deleteTimersRef = useRef({});
 
   const thread = comments
     .filter((c) => c.target_type === targetType && c.target_id === targetId)
@@ -29,11 +32,24 @@ export default function CommentThread({ targetType, targetId, comments, members,
     setText('');
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Supprimer ce commentaire ?')) return;
+  function handleDelete(id) {
     haptic.delete();
-    const updated = await deleteComment(id);
-    onCommentsChange(updated);
+    const snapshot = comments;
+    onCommentsChange(comments.filter((c) => c.id !== id));
+    showToast('Commentaire supprimé', {
+      type: 'danger',
+      duration: 5000,
+      actionLabel: 'Annuler',
+      onAction: () => {
+        clearTimeout(deleteTimersRef.current[id]);
+        delete deleteTimersRef.current[id];
+        onCommentsChange(snapshot);
+      },
+    });
+    deleteTimersRef.current[id] = setTimeout(async () => {
+      delete deleteTimersRef.current[id];
+      onCommentsChange(await deleteComment(id));
+    }, 5000);
   }
 
   return (

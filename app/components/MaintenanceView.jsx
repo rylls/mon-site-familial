@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { addMileageLog, updateMaintenanceItem, markMaintenanceDone, addMaintenanceItem, deleteMaintenanceItem } from '../actions';
 import { getMaintenanceStatus, STATUS_LABELS, STATUS_ORDER } from '../lib/maintenance';
 import { haptic } from '../lib/haptics';
 import { useToast } from './ToastProvider';
+import SwipeableRow from './SwipeableRow';
 
 function fmtDate(d) {
   if (!d) return null;
@@ -21,6 +22,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
   const [addingNew, setAddingNew] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', interval_km: '', interval_months: '', notes: '' });
   const showToast = useToast();
+  const deleteTimersRef = useRef({});
 
   const currentKm = mileageLogs[0]?.km ?? null;
   const currentKmDate = mileageLogs[0]?.recorded_at ?? null;
@@ -72,12 +74,24 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
     showToast('Entretien marqué comme fait ✅');
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Supprimer ce poste du plan d\'entretien ?')) return;
+  function handleDelete(id) {
     haptic.delete();
-    const updated = await deleteMaintenanceItem(id);
-    onMaintenanceItemsChange(updated);
-    showToast('Poste supprimé', { type: 'danger' });
+    const snapshot = maintenanceItems;
+    onMaintenanceItemsChange(maintenanceItems.filter((i) => i.id !== id));
+    showToast('Poste supprimé', {
+      type: 'danger',
+      duration: 5000,
+      actionLabel: 'Annuler',
+      onAction: () => {
+        clearTimeout(deleteTimersRef.current[id]);
+        delete deleteTimersRef.current[id];
+        onMaintenanceItemsChange(snapshot);
+      },
+    });
+    deleteTimersRef.current[id] = setTimeout(async () => {
+      delete deleteTimersRef.current[id];
+      onMaintenanceItemsChange(await deleteMaintenanceItem(id));
+    }, 5000);
   }
 
   async function handleAddItem() {
@@ -141,7 +155,14 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
       )}
 
       {rows.map(({ item, status, dueKm, dueDate, kmLeft, daysLeft }) => (
-        <div key={item.id} className={`maint-card status-${status}`}>
+        <SwipeableRow
+          key={item.id}
+          onSwipeLeft={editingId === item.id ? undefined : () => handleDelete(item.id)}
+          leftLabel="🗑 Supprimer"
+          onSwipeRight={editingId === item.id || currentKm == null ? undefined : () => handleMarkDone(item.id)}
+          rightLabel="✅ Fait"
+        >
+        <div className={`maint-card status-${status}`}>
           <div className="maint-top">
             <div className="maint-name">{item.name}</div>
             <span className={`maint-badge badge-${status}`}>{STATUS_LABELS[status]}</span>
@@ -187,6 +208,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
             </div>
           )}
         </div>
+        </SwipeableRow>
       ))}
     </div>
   );

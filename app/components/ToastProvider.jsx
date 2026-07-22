@@ -9,13 +9,20 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const timersRef = useRef({});
 
-  const showToast = useCallback((message, { type = 'success', duration = 2600 } = {}) => {
+  const dismiss = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+    clearTimeout(timersRef.current[id]);
+    delete timersRef.current[id];
+  }, []);
+
+  const showToast = useCallback((message, { type = 'success', duration = 2600, actionLabel, onAction } = {}) => {
     const id = nextId++;
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, actionLabel, onAction }]);
     timersRef.current[id] = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
       delete timersRef.current[id];
     }, duration);
+    return id;
   }, []);
 
   return (
@@ -23,7 +30,17 @@ export function ToastProvider({ children }) {
       {children}
       <div className="toast-stack">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast toast-${t.type}`}>{t.message}</div>
+          <div key={t.id} className={`toast toast-${t.type}`}>
+            <span>{t.message}</span>
+            {t.actionLabel && (
+              <button
+                className="toast-action"
+                onClick={() => { t.onAction?.(); dismiss(t.id); }}
+              >
+                {t.actionLabel}
+              </button>
+            )}
+          </div>
         ))}
       </div>
     </ToastContext.Provider>

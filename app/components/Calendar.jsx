@@ -21,6 +21,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   const [editingId, setEditingId] = useState(null);
   const sheetRef = useRef(null);
   const showToast = useToast();
+  const deleteTimersRef = useRef({});
 
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const today = startOfToday();
@@ -79,13 +80,25 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
     clearSelection();
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Supprimer ce trajet ? Les commentaires associés seront aussi supprimés.')) return;
+  function handleDelete(id) {
     haptic.delete();
-    const updated = await deleteBooking(id);
-    onBookingsChange(updated);
-    showToast('Trajet supprimé', { type: 'danger' });
+    const snapshot = bookings;
+    onBookingsChange(bookings.filter((b) => b.id !== id));
     if (editingId === id) clearSelection();
+    showToast('Trajet supprimé', {
+      type: 'danger',
+      duration: 5000,
+      actionLabel: 'Annuler',
+      onAction: () => {
+        clearTimeout(deleteTimersRef.current[id]);
+        delete deleteTimersRef.current[id];
+        onBookingsChange(snapshot);
+      },
+    });
+    deleteTimersRef.current[id] = setTimeout(async () => {
+      delete deleteTimersRef.current[id];
+      onBookingsChange(await deleteBooking(id));
+    }, 5000);
   }
 
   function prevMonth() {

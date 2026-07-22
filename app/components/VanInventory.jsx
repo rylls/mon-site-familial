@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { updateInventoryLevel, addInventoryItem, deleteInventoryItem, bulkFillZone } from '../actions';
 import { ZONES, ZONE_LABELS } from './zones';
 import VanDiagram from './VanDiagram';
 import CommentThread from './CommentThread';
+import SwipeableRow from './SwipeableRow';
 import { haptic } from '../lib/haptics';
 import { useToast } from './ToastProvider';
 
@@ -15,6 +16,7 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
   const [newName, setNewName] = useState('');
   const [filling, setFilling] = useState(false);
   const showToast = useToast();
+  const deleteTimersRef = useRef({});
 
   const zoneItems = items.filter((i) => i.zone === zone);
   const zoneNotFull = zoneItems.filter((i) => i.level !== 'plein').length;
@@ -34,12 +36,24 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
     setNewName('');
   }
 
-  async function handleDelete(id, name) {
-    if (!confirm(`Supprimer "${name}" de l'inventaire ?`)) return;
+  function handleDelete(id, name) {
     haptic.delete();
-    const updated = await deleteInventoryItem(id);
-    onItemsChange(updated);
-    showToast('Objet supprimé', { type: 'danger' });
+    const snapshot = items;
+    onItemsChange(items.filter((i) => i.id !== id));
+    showToast(`"${name}" supprimé`, {
+      type: 'danger',
+      duration: 5000,
+      actionLabel: 'Annuler',
+      onAction: () => {
+        clearTimeout(deleteTimersRef.current[id]);
+        delete deleteTimersRef.current[id];
+        onItemsChange(snapshot);
+      },
+    });
+    deleteTimersRef.current[id] = setTimeout(async () => {
+      delete deleteTimersRef.current[id];
+      onItemsChange(await deleteInventoryItem(id));
+    }, 5000);
   }
 
   async function handleFillZone() {
@@ -89,34 +103,36 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
 
       {zoneItems.length === 0 && <div className="empty-state">Rien de référencé ici pour l'instant.</div>}
       {zoneItems.map((item) => (
-        <div key={item.id} className="inv-item">
-          <div className="inv-item-top">
-            <div className="inv-name">
-              {item.name}
-              {item.updated_at && <div className="inv-meta">mis à jour {new Date(item.updated_at).toLocaleDateString('fr-FR')}</div>}
+        <SwipeableRow key={item.id} onSwipeLeft={() => handleDelete(item.id, item.name)} leftLabel="🗑 Supprimer">
+          <div className="inv-item">
+            <div className="inv-item-top">
+              <div className="inv-name">
+                {item.name}
+                {item.updated_at && <div className="inv-meta">mis à jour {new Date(item.updated_at).toLocaleDateString('fr-FR')}</div>}
+              </div>
+              <span className={`level-label ${item.level}`}>{LEVEL_TEXT[item.level]}</span>
+              <div className="gauge">
+                {LEVELS.map((lvl, idx) => (
+                  <div
+                    key={lvl}
+                    className={`gauge-seg${LEVELS.indexOf(item.level) >= idx ? ` on-${item.level}` : ''}`}
+                    onClick={() => setLevel(item.id, lvl)}
+                    title={LEVEL_TEXT[lvl]}
+                  />
+                ))}
+              </div>
+              <button className="item-del" aria-label="Supprimer l'objet" onClick={() => handleDelete(item.id, item.name)}>✕</button>
             </div>
-            <span className={`level-label ${item.level}`}>{LEVEL_TEXT[item.level]}</span>
-            <div className="gauge">
-              {LEVELS.map((lvl, idx) => (
-                <div
-                  key={lvl}
-                  className={`gauge-seg${LEVELS.indexOf(item.level) >= idx ? ` on-${item.level}` : ''}`}
-                  onClick={() => setLevel(item.id, lvl)}
-                  title={LEVEL_TEXT[lvl]}
-                />
-              ))}
-            </div>
-            <button className="item-del" aria-label="Supprimer l'objet" onClick={() => handleDelete(item.id, item.name)}>✕</button>
+            <CommentThread
+              targetType="inventory_item"
+              targetId={item.id}
+              comments={comments}
+              members={members}
+              currentMember={currentMember}
+              onCommentsChange={onCommentsChange}
+            />
           </div>
-          <CommentThread
-            targetType="inventory_item"
-            targetId={item.id}
-            comments={comments}
-            members={members}
-            currentMember={currentMember}
-            onCommentsChange={onCommentsChange}
-          />
-        </div>
+        </SwipeableRow>
       ))}
     </div>
   );
