@@ -7,7 +7,6 @@ import ProfilePicker from './ProfilePicker';
 import Calendar from './Calendar';
 import VanInventory from './VanInventory';
 import CurrentBookingBanner from './CurrentBookingBanner';
-import DashboardOverview from './DashboardOverview';
 import HomeView from './HomeView';
 import ActivityFeed from './ActivityFeed';
 import MemberSettings from './MemberSettings';
@@ -227,14 +226,6 @@ function AppShellInner({
           members={members}
           onOpenTripEnd={() => { setTripEndBooking(null); setTripEndOpen(true); }}
         />
-
-        {tab !== 'accueil' && (
-          <DashboardOverview
-            maintenanceItems={maintenanceItems}
-            currentKm={currentKm}
-            onGoToTab={changeTab}
-          />
-        )}
 
         <div className="tabs">
           <button className={`tab${tab === 'accueil' ? ' active' : ''}`} onClick={() => changeTab('accueil')}>

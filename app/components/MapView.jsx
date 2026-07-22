@@ -29,6 +29,7 @@ export default function MapView({ spots, onSpotsChange, members, currentMember }
   const mapRef = useRef(null);
   const leafletRef = useRef(null);
   const markersRef = useRef({});
+  const resizeObserverRef = useRef(null);
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
 
   const [placing, setPlacing] = useState(false);
@@ -58,9 +59,15 @@ export default function MapView({ spots, onSpotsChange, members, currentMember }
         setDraft({ lat: e.latlng.lat, lng: e.latlng.lng });
       });
       mapRef.current = map;
-      setTimeout(() => map.invalidateSize(), 50);
+
+      const ro = new ResizeObserver(() => map.invalidateSize());
+      ro.observe(mapElRef.current);
+      resizeObserverRef.current = ro;
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      resizeObserverRef.current?.disconnect();
+    };
   }, []);
 
   useEffect(() => {

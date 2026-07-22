@@ -163,25 +163,27 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
-function WeatherCard({ nextTrip }) {
+function WeatherCard({ trip, isActive }) {
   const [weather, setWeather] = useState(undefined);
   const [location, setLocation] = useState(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState(false);
+
+  const weatherDate = trip ? (isActive ? fmtDate(startOfToday()) : fmtDate(parseDate(trip.start_date))) : null;
 
   useEffect(() => {
     setLocation(getStoredLocation());
   }, []);
 
   useEffect(() => {
-    if (!nextTrip) { setWeather(undefined); return; }
+    if (!weatherDate) { setWeather(undefined); return; }
     let cancelled = false;
     setWeather(undefined);
-    fetchDailyWeather(fmtDate(parseDate(nextTrip.start_date)), location?.lat, location?.lon).then((w) => {
+    fetchDailyWeather(weatherDate, location?.lat, location?.lon).then((w) => {
       if (!cancelled) setWeather(w);
     });
     return () => { cancelled = true; };
-  }, [nextTrip?.id, location?.lat, location?.lon]);
+  }, [weatherDate, location?.lat, location?.lon]);
 
   async function handleRefreshLocation() {
     haptic.tap();
@@ -197,12 +199,12 @@ function WeatherCard({ nextTrip }) {
     }
   }
 
-  if (!nextTrip || weather === null) return null;
+  if (!trip || weather === null) return null;
 
   return (
     <div className="home-card weather-card">
       <div className="home-card-title weather-card-title">
-        <span>Météo au départ · {location?.name || DEFAULT_LOCATION_NAME}</span>
+        <span>Météo {isActive ? 'du jour' : 'au départ'} · {location?.name || DEFAULT_LOCATION_NAME}</span>
         <button
           className="weather-refresh-btn"
           title="Actualiser la localisation"
@@ -221,7 +223,7 @@ function WeatherCard({ nextTrip }) {
           <span className="weather-emoji">{weatherEmoji(weather.code)}</span>
           <div>
             <div className="weather-temps">{weather.min}° / {weather.max}°</div>
-            <div className="weather-date">{formatRange(nextTrip.start_date, nextTrip.start_date)}</div>
+            <div className="weather-date">{formatRange(weatherDate, weatherDate)}</div>
           </div>
         </div>
       )}
@@ -688,7 +690,7 @@ export default function HomeView({
     <div className="home-view">
       <div className="home-grid">
         <CountdownCard trip={trip} member={trip ? memberById[trip.member_id] : null} isActive={isActive} />
-        <WeatherCard nextTrip={nextUpcoming} />
+        <WeatherCard trip={trip} isActive={isActive} />
         {pastTrip?.note ? (
           <AnecdoteCard pastTrip={pastTrip} member={memberById[pastTrip.member_id]} />
         ) : (

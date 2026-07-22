@@ -23,7 +23,7 @@
   --radius-sm:15px;
 }
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html,body{ margin:0; padding:0; }
+html,body{ margin:0; padding:0; overflow-x:hidden; }
 body{
   background-color:var(--bg);
   background-image:
@@ -1423,6 +1423,13 @@ input::placeholder{ color:var(--ink-faint); }
 @media (max-width:640px){
   .van-status-pill span{ display:none; }
   .van-status-pill{ padding:6px 9px; }
+}
+
+@media (max-width:760px){
+  .top-header-inner{ flex-wrap:wrap; row-gap:8px; }
+  .brand p{ display:none; }
+  .current-user span{ display:none; }
+  .current-user{ padding:5px; }
 }
 
 @media (max-width:700px){
