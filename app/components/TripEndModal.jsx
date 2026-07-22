@@ -1,17 +1,20 @@
 'use client';
 import { useState } from 'react';
-import { updateInventoryLevel } from '../actions';
+import { updateInventoryLevel, addMileageLog, ackTripEnd } from '../actions';
 import { ZONES, ZONE_LABELS } from './zones';
 import { haptic } from '../lib/haptics';
 
 const LEVELS = ['vide', 'partiel', 'plein'];
 
-export default function TripEndModal({ items, onItemsChange, currentMember, onClose }) {
+export default function TripEndModal({ items, onItemsChange, currentMember, booking, currentKm, onMileageLogsChange, onBookingsChange, onClose }) {
   const [drafts, setDrafts] = useState(Object.fromEntries(items.map((i) => [i.id, i.level])));
   const [collapsed, setCollapsed] = useState({});
   const [saving, setSaving] = useState(false);
+  const [kmInput, setKmInput] = useState('');
 
   const dirtyCount = items.filter((i) => drafts[i.id] !== i.level).length;
+  const kmValue = kmInput === '' ? null : parseInt(kmInput, 10);
+  const kmDirty = kmValue != null && kmValue > 0 && kmValue !== currentKm;
 
   function setLevel(id, level) {
     haptic.tap();
@@ -25,7 +28,14 @@ export default function TripEndModal({ items, onItemsChange, currentMember, onCl
   async function handleSave() {
     setSaving(true);
     const changed = items.filter((i) => drafts[i.id] !== i.level);
-    await Promise.all(changed.map((i) => updateInventoryLevel(i.id, drafts[i.id], currentMember?.id)));
+    const tasks = [Promise.all(changed.map((i) => updateInventoryLevel(i.id, drafts[i.id], currentMember?.id)))];
+    if (kmDirty) {
+      tasks.push(addMileageLog({ km: kmValue, recorded_by: currentMember?.id }).then((logs) => onMileageLogsChange?.(logs)));
+    }
+    if (booking && !booking.trip_end_ack) {
+      tasks.push(ackTripEnd(booking.id).then((bookings) => onBookingsChange?.(bookings)));
+    }
+    await Promise.all(tasks);
     haptic.success();
     onItemsChange(items.map((i) => ({ ...i, level: drafts[i.id] })));
     setSaving(false);
@@ -37,6 +47,18 @@ export default function TripEndModal({ items, onItemsChange, currentMember, onCl
       <div className="tripend-card" onClick={(e) => e.stopPropagation()}>
         <h1>Bon retour ! 🚐</h1>
         <p>Fais le point sur ce qu'il reste, zone par zone. Tu peux replier ce qui ne t'intéresse pas.</p>
+
+        <div className="tripend-km">
+          <label htmlFor="tripend-km-input">Kilométrage actuel{currentKm != null ? ` (dernier relevé : ${currentKm.toLocaleString('fr-FR')} km)` : ''}</label>
+          <input
+            id="tripend-km-input"
+            type="number"
+            inputMode="numeric"
+            placeholder={currentKm != null ? String(currentKm) : 'ex: 84200'}
+            value={kmInput}
+            onChange={(e) => setKmInput(e.target.value)}
+          />
+        </div>
 
         {ZONES.map((z) => {
           const zoneItems = items.filter((i) => i.zone === z.id);
@@ -69,8 +91,8 @@ export default function TripEndModal({ items, onItemsChange, currentMember, onCl
 
         <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
           <button className="btn" onClick={onClose}>Plus tard</button>
-          <button className="btn primary" style={{ flex: 1 }} onClick={handleSave} disabled={saving || dirtyCount === 0}>
-            {saving ? '…' : dirtyCount > 0 ? `Enregistrer (${dirtyCount})` : 'Rien à changer'}
+          <button className="btn primary" style={{ flex: 1 }} onClick={handleSave} disabled={saving || (dirtyCount === 0 && !kmDirty)}>
+            {saving ? '…' : (dirtyCount > 0 || kmDirty) ? `Enregistrer${dirtyCount > 0 ? ` (${dirtyCount})` : ''}` : 'Rien à changer'}
           </button>
         </div>
       </div>

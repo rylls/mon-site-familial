@@ -39,6 +39,15 @@ export async function editBooking(id, { start_date, end_date, note }) {
   return getBookings();
 }
 
+export async function ackTripEnd(id) {
+  const { error } = await supabaseAdmin
+    .from('bookings')
+    .update({ trip_end_ack: true })
+    .eq('id', id);
+  if (error) throw error;
+  return getBookings();
+}
+
 export async function getInventory() {
   const { data, error } = await supabaseAdmin
     .from('inventory_items')
@@ -284,6 +293,87 @@ export async function deleteImportantInfo(id) {
 export async function reorderImportantInfo(orderedIds) {
   await Promise.all(orderedIds.map((id, position) => supabaseAdmin.from('important_info').update({ position }).eq('id', id)));
   return getImportantInfo();
+}
+
+export async function getIdeas() {
+  const { data, error } = await supabaseAdmin
+    .from('ideas')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('getIdeas failed (table missing? run schema.sql):', error.message);
+    return [];
+  }
+  return data;
+}
+
+export async function addIdea({ member_id, text }) {
+  const { error } = await supabaseAdmin.from('ideas').insert({ member_id, text });
+  if (error) throw error;
+  return getIdeas();
+}
+
+export async function validateIdea(id) {
+  const { error } = await supabaseAdmin.from('ideas').update({ status: 'validated' }).eq('id', id);
+  if (error) throw error;
+  return getIdeas();
+}
+
+export async function deleteIdea(id) {
+  const { error } = await supabaseAdmin.from('ideas').delete().eq('id', id);
+  if (error) throw error;
+  return getIdeas();
+}
+
+export async function getSleepSpots() {
+  const { data, error } = await supabaseAdmin
+    .from('sleep_spots')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('getSleepSpots failed (table missing? run schema.sql):', error.message);
+    return [];
+  }
+  return data;
+}
+
+export async function addSleepSpot({ member_id, lat, lng, name, note }) {
+  const { data, error } = await supabaseAdmin
+    .from('sleep_spots')
+    .insert({ member_id, lat, lng, name: name || null, note: note || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSleepSpot(id) {
+  const { data: row } = await supabaseAdmin.from('sleep_spots').select('photo_url').eq('id', id).maybeSingle();
+  if (row?.photo_url) {
+    const path = row.photo_url.split('/sleep-spots/')[1];
+    if (path) await supabaseAdmin.storage.from('sleep-spots').remove([path]);
+  }
+  const { error } = await supabaseAdmin.from('sleep_spots').delete().eq('id', id);
+  if (error) throw error;
+  return getSleepSpots();
+}
+
+export async function uploadSleepSpotPhoto(id, formData) {
+  const file = formData.get('file');
+  if (!file) throw new Error('Aucun fichier');
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${id}-${Date.now()}.${ext}`;
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from('sleep-spots')
+    .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+  if (uploadError) throw uploadError;
+  const { data: pub } = supabaseAdmin.storage.from('sleep-spots').getPublicUrl(path);
+  const { error } = await supabaseAdmin
+    .from('sleep_spots')
+    .update({ photo_url: pub.publicUrl })
+    .eq('id', id);
+  if (error) throw error;
+  return getSleepSpots();
 }
 
 export async function uploadImportantInfoPhoto(id, formData) {

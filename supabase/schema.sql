@@ -28,6 +28,10 @@ create table if not exists bookings (
   created_at timestamptz not null default now()
 );
 
+-- Marque que la personne ayant réservé a fait le point de fin de voyage
+-- (popup automatique : consommables + kilométrage).
+alter table bookings add column if not exists trip_end_ack boolean not null default false;
+
 -- Inventaire embarqué dans le van, organisé par zone (pour le schéma en coupe)
 create table if not exists inventory_items (
   id uuid primary key default gen_random_uuid(),
@@ -171,6 +175,38 @@ create table if not exists important_info (
   created_at timestamptz not null default now()
 );
 
+-- Boîte à idées : accessible via l'ampoule flottante. Toute la famille peut
+-- proposer une idée, seul Vincent peut la valider ou la supprimer.
+create table if not exists ideas (
+  id uuid primary key default gen_random_uuid(),
+  member_id text not null references members(id),
+  text text not null,
+  status text not null default 'pending' check (status in ('pending','validated')),
+  created_at timestamptz not null default now()
+);
+
+-- Carte des spots où la famille a dormi avec le van : un drapeau par membre,
+-- avec photo et avis optionnels.
+create table if not exists sleep_spots (
+  id uuid primary key default gen_random_uuid(),
+  member_id text not null references members(id),
+  lat double precision not null,
+  lng double precision not null,
+  name text,
+  note text,
+  photo_url text,
+  created_at timestamptz not null default now()
+);
+
+-- Bucket public pour les photos des spots (mêmes principes que "important-info").
+insert into storage.buckets (id, name, public)
+values ('sleep-spots', 'sleep-spots', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Public read sleep-spots" on storage.objects;
+create policy "Public read sleep-spots" on storage.objects
+  for select using (bucket_id = 'sleep-spots');
+
 -- RLS activée : aucune policy publique. L'app utilise la clé "service_role"
 -- côté serveur (elle contourne toujours RLS), donc une clé anon fuitée
 -- n'aurait accès à rien.
@@ -182,3 +218,5 @@ alter table mileage_logs enable row level security;
 alter table maintenance_items enable row level security;
 alter table app_settings enable row level security;
 alter table important_info enable row level security;
+alter table ideas enable row level security;
+alter table sleep_spots enable row level security;

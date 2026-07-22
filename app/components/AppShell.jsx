@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Avatar from './Avatar';
 import ProfilePicker from './ProfilePicker';
@@ -12,13 +13,17 @@ import ActivityFeed from './ActivityFeed';
 import MemberSettings from './MemberSettings';
 import MaintenanceView from './MaintenanceView';
 import TripEndModal from './TripEndModal';
+import NotificationBell from './NotificationBell';
+import IdeaBox from './IdeaBox';
 import Mountains from './decor/Mountains';
 import SideDoodles from './decor/SideDoodles';
 import { PineTreeIcon } from './decor/DoodleIcons';
 import { buildActivity } from '../lib/activity';
-import { getMaintenanceStatus } from '../lib/maintenance';
+import { getMaintenanceStatus, STATUS_LABELS } from '../lib/maintenance';
 import { parseDate, startOfToday } from '../lib/dates';
 import { haptic } from '../lib/haptics';
+
+const MapView = dynamic(() => import('./MapView'), { ssr: false });
 
 const COOKIE_NAME = 'van_profile';
 const LAST_SEEN_KEY = 'wouchi_last_seen';
@@ -40,12 +45,14 @@ function AppShellInner({
   maintenanceItems: initialMaintenanceItems,
   activityClearedAt: initialActivityClearedAt,
   importantInfo: initialImportantInfo,
+  ideas: initialIdeas,
+  sleepSpots: initialSleepSpots,
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab');
   const [profileId, setProfileId] = useState(undefined);
-  const [tab, setTab] = useState(['accueil', 'calendrier', 'van', 'activite', 'entretien'].includes(urlTab) ? urlTab : 'accueil');
+  const [tab, setTab] = useState(['accueil', 'calendrier', 'van', 'carte', 'activite', 'entretien'].includes(urlTab) ? urlTab : 'accueil');
   const [members, setMembers] = useState(initialMembers);
   const [bookings, setBookings] = useState(initialBookings);
   const [inventory, setInventory] = useState(initialInventory);
@@ -54,9 +61,13 @@ function AppShellInner({
   const [maintenanceItems, setMaintenanceItems] = useState(initialMaintenanceItems);
   const [activityClearedAt, setActivityClearedAt] = useState(initialActivityClearedAt);
   const [importantInfo, setImportantInfo] = useState(initialImportantInfo || []);
+  const [ideas, setIdeas] = useState(initialIdeas || []);
+  const [sleepSpots, setSleepSpots] = useState(initialSleepSpots || []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tripEndOpen, setTripEndOpen] = useState(false);
+  const [tripEndBooking, setTripEndBooking] = useState(null);
   const [hasNewActivity, setHasNewActivity] = useState(false);
+  const autoTripEndShownRef = useState(() => new Set())[0];
 
   useEffect(() => {
     setProfileId(readCookie(COOKIE_NAME));
@@ -68,11 +79,59 @@ function AppShellInner({
   const today = startOfToday();
   const isVanOut = bookings.some((b) => parseDate(b.start_date) <= today && today <= parseDate(b.end_date));
 
+  const currentMember = members.find((m) => m.id === profileId) || null;
+  useEffect(() => {
+    if (!currentMember) return;
+    const pending = bookings.find((b) => {
+      if (b.member_id !== currentMember.id || b.trip_end_ack) return false;
+      const daysSinceEnd = Math.round((today - parseDate(b.end_date)) / 86400000);
+      return daysSinceEnd > 0 && daysSinceEnd <= 3;
+    });
+    if (pending && !autoTripEndShownRef.has(pending.id)) {
+      autoTripEndShownRef.add(pending.id);
+      setTripEndBooking(pending);
+      setTripEndOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMember?.id, bookings]);
+
   const currentKm = mileageLogs[0]?.km ?? null;
   const maintenanceDueCount = maintenanceItems.filter((item) => {
     const s = getMaintenanceStatus(item, currentKm).status;
     return s === 'retard' || s === 'bientot';
   }).length;
+
+  const notifications = [];
+  if (currentMember) {
+    bookings
+      .filter((b) => {
+        if (b.member_id !== currentMember.id || b.trip_end_ack) return false;
+        const daysSinceEnd = Math.round((today - parseDate(b.end_date)) / 86400000);
+        return daysSinceEnd > 0 && daysSinceEnd <= 3;
+      })
+      .forEach((b) => {
+        notifications.push({
+          id: `tripend-${b.id}`,
+          icon: '📋',
+          title: 'Voyage terminé',
+          body: 'Fais le point sur les consommables et ajoute le kilométrage.',
+          actionLabel: 'Faire le point',
+          onAction: () => { setTripEndBooking(b); setTripEndOpen(true); },
+        });
+      });
+  }
+  maintenanceItems.forEach((item) => {
+    const s = getMaintenanceStatus(item, currentKm).status;
+    if (s !== 'retard' && s !== 'bientot') return;
+    notifications.push({
+      id: `maint-${item.id}`,
+      icon: s === 'retard' ? '🔴' : '🟠',
+      title: item.name,
+      body: `Entretien : ${STATUS_LABELS[s]}`,
+      actionLabel: 'Voir',
+      onAction: () => changeTab('entretien'),
+    });
+  });
 
   useEffect(() => {
     const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
@@ -87,8 +146,6 @@ function AppShellInner({
   if (profileId === undefined) {
     return null;
   }
-
-  const currentMember = members.find((m) => m.id === profileId) || null;
 
   function chooseProfile(id) {
     writeCookie(COOKIE_NAME, id);
@@ -136,10 +193,11 @@ function AppShellInner({
               className="btn small"
               aria-label="Faire le point sur le van"
               title="Faire le point sur le van"
-              onClick={() => { haptic.tap(); setTripEndOpen(true); }}
+              onClick={() => { haptic.tap(); setTripEndBooking(null); setTripEndOpen(true); }}
             >
               📋
             </button>
+            <NotificationBell items={notifications} />
             {currentMember && (
               <div className="current-user" onClick={() => { haptic.tap(); setProfileId(null); }} title="Changer de profil">
                 <Avatar member={currentMember} />
@@ -167,7 +225,7 @@ function AppShellInner({
         <CurrentBookingBanner
           bookings={bookings}
           members={members}
-          onOpenTripEnd={() => setTripEndOpen(true)}
+          onOpenTripEnd={() => { setTripEndBooking(null); setTripEndOpen(true); }}
         />
 
         {tab !== 'accueil' && (
@@ -187,6 +245,9 @@ function AppShellInner({
           </button>
           <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => changeTab('van')}>
             <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> Le van
+          </button>
+          <button className={`tab${tab === 'carte' ? ' active' : ''}`} onClick={() => changeTab('carte')}>
+            <span>🗺️</span> Carte
           </button>
           <button className={`tab${tab === 'activite' ? ' active' : ''}`} onClick={() => changeTab('activite')}>
             <span>📖</span> Activité
@@ -234,6 +295,14 @@ function AppShellInner({
             currentMember={currentMember}
           />
         )}
+        {tab === 'carte' && (
+          <MapView
+            spots={sleepSpots}
+            onSpotsChange={setSleepSpots}
+            members={members}
+            currentMember={currentMember}
+          />
+        )}
         {tab === 'activite' && <ActivityFeed activity={activity} onClear={handleClearActivity} />}
         {tab === 'entretien' && (
           <MaintenanceView
@@ -245,6 +314,15 @@ function AppShellInner({
           />
         )}
       </div>
+
+      {currentMember && (
+        <IdeaBox
+          ideas={ideas}
+          onIdeasChange={setIdeas}
+          members={members}
+          currentMember={currentMember}
+        />
+      )}
 
       {!currentMember && <ProfilePicker members={members} onChoose={chooseProfile} />}
       {settingsOpen && (
@@ -261,7 +339,11 @@ function AppShellInner({
           items={inventory}
           onItemsChange={setInventory}
           currentMember={currentMember}
-          onClose={() => setTripEndOpen(false)}
+          booking={tripEndBooking}
+          currentKm={currentKm}
+          onMileageLogsChange={setMileageLogs}
+          onBookingsChange={setBookings}
+          onClose={() => { setTripEndOpen(false); setTripEndBooking(null); }}
         />
       )}
     </div>

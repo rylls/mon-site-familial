@@ -156,3 +156,19 @@ export function OilCanIcon({ size = 20, color = '#3B2B1D' }) {
     </svg>
   );
 }
+
+export function LightbulbIcon({ size = 26, color = '#E0A83E' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M12 2.5 Q18 2.5 18 9 Q18 12.5 15.5 14.3 Q14.5 15 14.5 16.3 V17.5 H9.5 V16.3 Q9.5 15 8.5 14.3 Q6 12.5 6 9 Q6 2.5 12 2.5 Z"
+        fill={color}
+        stroke="#3B2B1D"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path d="M10.2 19 H13.8 M10.6 21 H13.4" stroke="#3B2B1D" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M10.5 6.5 Q9.5 8 10.5 9.5" stroke="#FFF6DE" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}

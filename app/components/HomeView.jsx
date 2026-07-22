@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 're
 import Avatar from './Avatar';
 import { addImportantInfo, updateImportantInfo, deleteImportantInfo, uploadImportantInfoPhoto, reorderImportantInfo } from '../actions';
 import { parseDate, formatRange, startOfToday, fmtDate } from '../lib/dates';
-import { fetchDailyWeather, weatherEmoji, DEFAULT_LOCATION_NAME } from '../lib/weather';
+import { fetchDailyWeather, weatherEmoji, DEFAULT_LOCATION_NAME, getStoredLocation, refreshLocation } from '../lib/weather';
 import { getMaintenanceStatus, STATUS_ORDER } from '../lib/maintenance';
 import { haptic } from '../lib/haptics';
 
@@ -165,22 +165,55 @@ function timeAgo(iso) {
 
 function WeatherCard({ nextTrip }) {
   const [weather, setWeather] = useState(undefined);
+  const [location, setLocation] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState(false);
+
+  useEffect(() => {
+    setLocation(getStoredLocation());
+  }, []);
 
   useEffect(() => {
     if (!nextTrip) { setWeather(undefined); return; }
     let cancelled = false;
     setWeather(undefined);
-    fetchDailyWeather(fmtDate(parseDate(nextTrip.start_date))).then((w) => {
+    fetchDailyWeather(fmtDate(parseDate(nextTrip.start_date)), location?.lat, location?.lon).then((w) => {
       if (!cancelled) setWeather(w);
     });
     return () => { cancelled = true; };
-  }, [nextTrip?.id]);
+  }, [nextTrip?.id, location?.lat, location?.lon]);
+
+  async function handleRefreshLocation() {
+    haptic.tap();
+    setLocating(true);
+    setLocError(false);
+    try {
+      const loc = await refreshLocation();
+      setLocation(loc);
+    } catch {
+      setLocError(true);
+    } finally {
+      setLocating(false);
+    }
+  }
 
   if (!nextTrip || weather === null) return null;
 
   return (
     <div className="home-card weather-card">
-      <div className="home-card-title">Météo au départ · {DEFAULT_LOCATION_NAME}</div>
+      <div className="home-card-title weather-card-title">
+        <span>Météo au départ · {location?.name || DEFAULT_LOCATION_NAME}</span>
+        <button
+          className="weather-refresh-btn"
+          title="Actualiser la localisation"
+          aria-label="Actualiser la localisation"
+          onClick={handleRefreshLocation}
+          disabled={locating}
+        >
+          {locating ? '…' : '📍'}
+        </button>
+      </div>
+      {locError && <div className="weather-loc-error">Localisation indisponible. Vérifie les autorisations.</div>}
       {weather === undefined ? (
         <div className="weather-loading">…</div>
       ) : (
@@ -381,6 +414,14 @@ function ImportantInfoCard({ items, onItemsChange }) {
   const newBodyRef = useRef(null);
   const editBodyRef = useRef(null);
   const listRef = useRef(null);
+  const initedCollapseRef = useRef(false);
+
+  useEffect(() => {
+    if (initedCollapseRef.current) return;
+    if (items.length === 0) return;
+    initedCollapseRef.current = true;
+    setCollapsedIds(new Set(items.map((i) => i.id)));
+  }, [items]);
 
   function toggleCollapsed(id) {
     haptic.tap();

@@ -12,10 +12,64 @@ export function weatherEmoji(code) {
   return CODE_EMOJI[code] || '🌡️';
 }
 
-// Coordonnées par défaut (France) — à ajuster si le van change de région.
+// Coordonnées par défaut (France) — utilisées tant que personne n'a
+// actualisé la localisation depuis l'appareil.
 const DEFAULT_LAT = 47.2184;
 const DEFAULT_LON = -1.5536;
 export const DEFAULT_LOCATION_NAME = 'Nantes';
+
+const LOCATION_KEY = 'wouchi_weather_location';
+
+export function getStoredLocation() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(LOCATION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeLocation(location) {
+  try {
+    localStorage.setItem(LOCATION_KEY, JSON.stringify(location));
+  } catch {}
+}
+
+async function reverseGeocode(lat, lon) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=fr`;
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.address?.town || data.address?.city || data.address?.village || data.address?.municipality || data.address?.county || null;
+  } catch {
+    return null;
+  }
+}
+
+// Demande la géolocalisation du navigateur, met à jour et renvoie la
+// localisation stockée (coords + nom de ville si trouvé).
+export function refreshLocation() {
+  return new Promise((resolve, reject) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      reject(new Error('Géolocalisation non disponible'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const name = (await reverseGeocode(lat, lon)) || `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+        const location = { lat, lon, name };
+        storeLocation(location);
+        resolve(location);
+      },
+      (err) => reject(err),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
+    );
+  });
+}
 
 export async function fetchDailyWeather(dateISO, lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   try {
