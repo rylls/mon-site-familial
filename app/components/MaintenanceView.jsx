@@ -1,6 +1,6 @@
 'use client';
-import { useRef, useState } from 'react';
-import { addMileageLog, updateMaintenanceItem, markMaintenanceDone, addMaintenanceItem, deleteMaintenanceItem } from '../actions';
+import { useState } from 'react';
+import { addMileageLog, updateMaintenanceItem, markMaintenanceDone, addMaintenanceItem, deleteMaintenanceItem, restoreMaintenanceItem } from '../actions';
 import { getMaintenanceStatus, STATUS_LABELS, STATUS_ORDER } from '../lib/maintenance';
 import { haptic } from '../lib/haptics';
 import { useToast } from './ToastProvider';
@@ -22,7 +22,6 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
   const [addingNew, setAddingNew] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', interval_km: '', interval_months: '', notes: '' });
   const showToast = useToast();
-  const deleteTimersRef = useRef({});
 
   const currentKm = mileageLogs[0]?.km ?? null;
   const currentKmDate = mileageLogs[0]?.recorded_at ?? null;
@@ -74,24 +73,17 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
     showToast('Entretien marqué comme fait ✅');
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     haptic.delete();
-    const snapshot = maintenanceItems;
-    onMaintenanceItemsChange(maintenanceItems.filter((i) => i.id !== id));
+    onMaintenanceItemsChange(await deleteMaintenanceItem(id));
     showToast('Poste supprimé', {
       type: 'danger',
       duration: 5000,
       actionLabel: 'Annuler',
-      onAction: () => {
-        clearTimeout(deleteTimersRef.current[id]);
-        delete deleteTimersRef.current[id];
-        onMaintenanceItemsChange(snapshot);
+      onAction: async () => {
+        onMaintenanceItemsChange(await restoreMaintenanceItem(id));
       },
     });
-    deleteTimersRef.current[id] = setTimeout(async () => {
-      delete deleteTimersRef.current[id];
-      onMaintenanceItemsChange(await deleteMaintenanceItem(id));
-    }, 5000);
   }
 
   async function handleAddItem() {

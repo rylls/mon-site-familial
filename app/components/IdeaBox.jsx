@@ -1,9 +1,9 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Avatar from './Avatar';
 import { LightbulbIcon } from './decor/DoodleIcons';
 import SwipeableRow from './SwipeableRow';
-import { addIdea, validateIdea, deleteIdea } from '../actions';
+import { addIdea, validateIdea, deleteIdea, restoreIdea } from '../actions';
 import { haptic } from '../lib/haptics';
 import { useToast } from './ToastProvider';
 
@@ -14,7 +14,6 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const canModerate = currentMember?.id === 'vincent';
   const showToast = useToast();
-  const deleteTimersRef = useRef({});
 
   const pending = ideas.filter((i) => i.status !== 'validated');
   const validated = ideas.filter((i) => i.status === 'validated');
@@ -37,24 +36,17 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
     showToast('Idée validée ✅');
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     haptic.tap();
-    const snapshot = ideas;
-    onIdeasChange(ideas.filter((i) => i.id !== id));
+    onIdeasChange(await deleteIdea(id));
     showToast('Idée supprimée', {
       type: 'danger',
       duration: 5000,
       actionLabel: 'Annuler',
-      onAction: () => {
-        clearTimeout(deleteTimersRef.current[id]);
-        delete deleteTimersRef.current[id];
-        onIdeasChange(snapshot);
+      onAction: async () => {
+        onIdeasChange(await restoreIdea(id));
       },
     });
-    deleteTimersRef.current[id] = setTimeout(async () => {
-      delete deleteTimersRef.current[id];
-      onIdeasChange(await deleteIdea(id));
-    }, 5000);
   }
 
   function renderIdea(idea) {

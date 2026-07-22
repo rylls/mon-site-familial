@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
-import { addBooking, deleteBooking, editBooking } from '../actions';
+import { addBooking, deleteBooking, restoreBooking, editBooking } from '../actions';
 import { parseDate, fmtDate, overlaps, formatRange, startOfToday } from '../lib/dates';
 import Avatar from './Avatar';
 import CommentThread from './CommentThread';
@@ -23,7 +23,6 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   const [bookingType, setBookingType] = useState('trip');
   const sheetRef = useRef(null);
   const showToast = useToast();
-  const deleteTimersRef = useRef({});
 
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const today = startOfToday();
@@ -83,26 +82,19 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
     clearSelection();
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     haptic.delete();
-    const snapshot = bookings;
     const wasMaintenance = bookings.find((b) => b.id === id)?.type === 'maintenance';
-    onBookingsChange(bookings.filter((b) => b.id !== id));
+    onBookingsChange(await deleteBooking(id));
     if (editingId === id) clearSelection();
     showToast(wasMaintenance ? 'Immobilisation supprimée' : 'Trajet supprimé', {
       type: 'danger',
       duration: 5000,
       actionLabel: 'Annuler',
-      onAction: () => {
-        clearTimeout(deleteTimersRef.current[id]);
-        delete deleteTimersRef.current[id];
-        onBookingsChange(snapshot);
+      onAction: async () => {
+        onBookingsChange(await restoreBooking(id));
       },
     });
-    deleteTimersRef.current[id] = setTimeout(async () => {
-      delete deleteTimersRef.current[id];
-      onBookingsChange(await deleteBooking(id));
-    }, 5000);
   }
 
   function prevMonth() {

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import Avatar from './Avatar';
-import { addImportantInfo, updateImportantInfo, deleteImportantInfo, uploadImportantInfoPhoto, reorderImportantInfo } from '../actions';
+import { addImportantInfo, updateImportantInfo, deleteImportantInfo, restoreImportantInfo, uploadImportantInfoPhoto, reorderImportantInfo } from '../actions';
 import { parseDate, formatRange, startOfToday, fmtDate } from '../lib/dates';
 import { fetchDailyWeather, weatherEmoji, DEFAULT_LOCATION_NAME, getStoredLocation, refreshLocation } from '../lib/weather';
 import { getMaintenanceStatus, STATUS_ORDER } from '../lib/maintenance';
@@ -427,7 +427,6 @@ function ImportantInfoCard({ items, onItemsChange }) {
   const listRef = useRef(null);
   const initedCollapseRef = useRef(false);
   const showToast = useToast();
-  const deleteTimersRef = useRef({});
 
   useEffect(() => {
     if (initedCollapseRef.current) return;
@@ -517,24 +516,17 @@ function ImportantInfoCard({ items, onItemsChange }) {
     }
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     haptic.delete();
-    const snapshot = items;
-    onItemsChange(items.filter((i) => i.id !== id));
+    onItemsChange(await deleteImportantInfo(id));
     showToast('Bloc supprimé', {
       type: 'danger',
       duration: 5000,
       actionLabel: 'Annuler',
-      onAction: () => {
-        clearTimeout(deleteTimersRef.current[id]);
-        delete deleteTimersRef.current[id];
-        onItemsChange(snapshot);
+      onAction: async () => {
+        onItemsChange(await restoreImportantInfo(id));
       },
     });
-    deleteTimersRef.current[id] = setTimeout(async () => {
-      delete deleteTimersRef.current[id];
-      onItemsChange(await deleteImportantInfo(id));
-    }, 5000);
   }
 
   async function handlePhoto(id, file) {

@@ -1,6 +1,6 @@
 'use client';
-import { useRef, useState } from 'react';
-import { updateInventoryLevel, addInventoryItem, deleteInventoryItem, bulkFillZone } from '../actions';
+import { useState } from 'react';
+import { updateInventoryLevel, addInventoryItem, deleteInventoryItem, restoreInventoryItem, bulkFillZone } from '../actions';
 import { ZONES, ZONE_LABELS } from './zones';
 import VanDiagram from './VanDiagram';
 import CommentThread from './CommentThread';
@@ -16,7 +16,6 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
   const [newName, setNewName] = useState('');
   const [filling, setFilling] = useState(false);
   const showToast = useToast();
-  const deleteTimersRef = useRef({});
 
   const zoneItems = items.filter((i) => i.zone === zone);
   const zoneNotFull = zoneItems.filter((i) => i.level !== 'plein').length;
@@ -36,24 +35,17 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
     setNewName('');
   }
 
-  function handleDelete(id, name) {
+  async function handleDelete(id, name) {
     haptic.delete();
-    const snapshot = items;
-    onItemsChange(items.filter((i) => i.id !== id));
+    onItemsChange(await deleteInventoryItem(id));
     showToast(`"${name}" supprimé`, {
       type: 'danger',
       duration: 5000,
       actionLabel: 'Annuler',
-      onAction: () => {
-        clearTimeout(deleteTimersRef.current[id]);
-        delete deleteTimersRef.current[id];
-        onItemsChange(snapshot);
+      onAction: async () => {
+        onItemsChange(await restoreInventoryItem(id));
       },
     });
-    deleteTimersRef.current[id] = setTimeout(async () => {
-      delete deleteTimersRef.current[id];
-      onItemsChange(await deleteInventoryItem(id));
-    }, 5000);
   }
 
   async function handleFillZone() {

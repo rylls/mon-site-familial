@@ -1,6 +1,15 @@
 'use server';
 import { supabaseAdmin } from '../lib/supabaseAdmin';
 
+// Le filtre `deleted_at` (suppression douce + undo) est ajouté par migration ;
+// si elle n'a pas encore été exécutée sur ce projet Supabase, la colonne
+// n'existe pas encore et PostgREST renvoie une erreur "column does not
+// exist" (42703). On retombe alors sur une lecture sans filtre plutôt que
+// de planter toute l'app tant que la migration n'a pas tourné.
+function isMissingDeletedAtColumn(error) {
+  return error?.code === '42703' || /deleted_at/.test(error?.message || '');
+}
+
 export async function getMembers() {
   const { data, error } = await supabaseAdmin.from('members').select('*').order('role', { ascending: false });
   if (error) throw error;
@@ -8,10 +17,14 @@ export async function getMembers() {
 }
 
 export async function getBookings() {
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from('bookings')
     .select('*')
+    .is('deleted_at', null)
     .order('start_date', { ascending: true });
+  if (error && isMissingDeletedAtColumn(error)) {
+    ({ data, error } = await supabaseAdmin.from('bookings').select('*').order('start_date', { ascending: true }));
+  }
   if (error) throw error;
   return data;
 }
@@ -25,7 +38,13 @@ export async function addBooking({ member_id, start_date, end_date, note, type }
 }
 
 export async function deleteBooking(id) {
-  const { error } = await supabaseAdmin.from('bookings').delete().eq('id', id);
+  const { error } = await supabaseAdmin.from('bookings').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+  return getBookings();
+}
+
+export async function restoreBooking(id) {
+  const { error } = await supabaseAdmin.from('bookings').update({ deleted_at: null }).eq('id', id);
   if (error) throw error;
   return getBookings();
 }
@@ -49,10 +68,14 @@ export async function ackTripEnd(id) {
 }
 
 export async function getInventory() {
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from('inventory_items')
     .select('*')
+    .is('deleted_at', null)
     .order('zone', { ascending: true });
+  if (error && isMissingDeletedAtColumn(error)) {
+    ({ data, error } = await supabaseAdmin.from('inventory_items').select('*').order('zone', { ascending: true }));
+  }
   if (error) throw error;
   return data;
 }
@@ -75,7 +98,13 @@ export async function addInventoryItem({ zone, name }) {
 }
 
 export async function deleteInventoryItem(id) {
-  const { error } = await supabaseAdmin.from('inventory_items').delete().eq('id', id);
+  const { error } = await supabaseAdmin.from('inventory_items').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+  return getInventory();
+}
+
+export async function restoreInventoryItem(id) {
+  const { error } = await supabaseAdmin.from('inventory_items').update({ deleted_at: null }).eq('id', id);
   if (error) throw error;
   return getInventory();
 }
@@ -144,10 +173,14 @@ export async function deleteMember(id) {
 }
 
 export async function getComments() {
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from('comments')
     .select('*')
+    .is('deleted_at', null)
     .order('created_at', { ascending: true });
+  if (error && isMissingDeletedAtColumn(error)) {
+    ({ data, error } = await supabaseAdmin.from('comments').select('*').order('created_at', { ascending: true }));
+  }
   if (error) throw error;
   return data;
 }
@@ -161,7 +194,13 @@ export async function addComment({ target_type, target_id, member_id, text }) {
 }
 
 export async function deleteComment(id) {
-  const { error } = await supabaseAdmin.from('comments').delete().eq('id', id);
+  const { error } = await supabaseAdmin.from('comments').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+  return getComments();
+}
+
+export async function restoreComment(id) {
+  const { error } = await supabaseAdmin.from('comments').update({ deleted_at: null }).eq('id', id);
   if (error) throw error;
   return getComments();
 }
@@ -184,10 +223,14 @@ export async function addMileageLog({ km, recorded_by, recorded_at }) {
 }
 
 export async function getMaintenanceItems() {
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from('maintenance_items')
     .select('*')
+    .is('deleted_at', null)
     .order('name', { ascending: true });
+  if (error && isMissingDeletedAtColumn(error)) {
+    ({ data, error } = await supabaseAdmin.from('maintenance_items').select('*').order('name', { ascending: true }));
+  }
   if (error) throw error;
   return data;
 }
@@ -219,7 +262,13 @@ export async function addMaintenanceItem({ name, interval_km, interval_months, n
 }
 
 export async function deleteMaintenanceItem(id) {
-  const { error } = await supabaseAdmin.from('maintenance_items').delete().eq('id', id);
+  const { error } = await supabaseAdmin.from('maintenance_items').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+  return getMaintenanceItems();
+}
+
+export async function restoreMaintenanceItem(id) {
+  const { error } = await supabaseAdmin.from('maintenance_items').update({ deleted_at: null }).eq('id', id);
   if (error) throw error;
   return getMaintenanceItems();
 }
@@ -241,14 +290,16 @@ export async function clearActivity() {
 
 export async function getImportantInfo() {
   let lastError = null;
+  let filterDeletedAt = true;
   for (let attempt = 0; attempt < 3; attempt++) {
-    const { data, error } = await supabaseAdmin
-      .from('important_info')
-      .select('*')
+    let query = supabaseAdmin.from('important_info').select('*');
+    if (filterDeletedAt) query = query.is('deleted_at', null);
+    const { data, error } = await query
       .order('position', { ascending: true })
       .order('created_at', { ascending: true });
     if (!error) return data;
     lastError = error;
+    if (isMissingDeletedAtColumn(error)) filterDeletedAt = false;
     console.error(`getImportantInfo attempt ${attempt + 1} failed:`, error.message);
     if (attempt < 2) await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
   }
@@ -280,12 +331,13 @@ export async function updateImportantInfo(id, { title, body }) {
 }
 
 export async function deleteImportantInfo(id) {
-  const { data: row } = await supabaseAdmin.from('important_info').select('photo_url').eq('id', id).maybeSingle();
-  if (row?.photo_url) {
-    const path = row.photo_url.split('/important-info/')[1];
-    if (path) await supabaseAdmin.storage.from('important-info').remove([path]);
-  }
-  const { error } = await supabaseAdmin.from('important_info').delete().eq('id', id);
+  const { error } = await supabaseAdmin.from('important_info').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+  return getImportantInfo();
+}
+
+export async function restoreImportantInfo(id) {
+  const { error } = await supabaseAdmin.from('important_info').update({ deleted_at: null }).eq('id', id);
   if (error) throw error;
   return getImportantInfo();
 }
@@ -299,6 +351,7 @@ export async function getIdeas() {
   const { data, error } = await supabaseAdmin
     .from('ideas')
     .select('*')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
   if (error) {
     console.error('getIdeas failed (table missing? run schema.sql):', error.message);
@@ -320,7 +373,13 @@ export async function validateIdea(id) {
 }
 
 export async function deleteIdea(id) {
-  const { error } = await supabaseAdmin.from('ideas').delete().eq('id', id);
+  const { error } = await supabaseAdmin.from('ideas').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+  return getIdeas();
+}
+
+export async function restoreIdea(id) {
+  const { error } = await supabaseAdmin.from('ideas').update({ deleted_at: null }).eq('id', id);
   if (error) throw error;
   return getIdeas();
 }
