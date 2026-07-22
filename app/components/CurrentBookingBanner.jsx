@@ -4,6 +4,8 @@ import Avatar from './Avatar';
 import { parseDate, formatRange, startOfToday } from '../lib/dates';
 import { haptic } from '../lib/haptics';
 
+const MAINTENANCE_COLOR = '#6B5B4D';
+
 export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd }) {
   const [index, setIndex] = useState(0);
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
@@ -34,7 +36,9 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
   const booking = trips[safeIndex];
   const current = isCurrent(booking);
   const recentlyEnded = isRecentlyEnded(booking);
+  const isMaintenance = booking.type === 'maintenance';
   const m = memberById[booking.member_id];
+  const bannerColor = isMaintenance ? MAINTENANCE_COLOR : m?.color;
   const daysLeft = Math.round((parseDate(booking.start_date) - today) / 86400000);
 
   function go(delta) {
@@ -43,7 +47,7 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
   }
 
   return (
-    <div className="banner" style={{ background: `linear-gradient(180deg, ${m?.color || '#333'}, ${shade(m?.color)})` }}>
+    <div className="banner" style={{ background: `linear-gradient(180deg, ${bannerColor || '#333'}, ${shade(bannerColor)})` }}>
       <div className="banner-van-strip">
         <div className="banner-van-wrap">
           <img src="/images/van-banner.png" alt="" className="banner-van-img" />
@@ -69,21 +73,26 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
       )}
 
       <div className="banner-eyebrow">
-        {current
-          ? 'Sur la route en ce moment'
-          : recentlyEnded
-            ? 'Trajet terminé récemment'
-            : daysLeft === 0 ? 'Départ aujourd\'hui' : `Dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`}
+        {isMaintenance
+          ? (current ? 'Chez le garage en ce moment' : recentlyEnded ? 'Retour de garage récent' : daysLeft === 0 ? 'Départ au garage aujourd\'hui' : `Dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`)
+          : current
+            ? 'Sur la route en ce moment'
+            : recentlyEnded
+              ? 'Trajet terminé récemment'
+              : daysLeft === 0 ? 'Départ aujourd\'hui' : `Dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`}
       </div>
       <div className="banner-main">
-        <Avatar member={m} size="lg" />
+        {isMaintenance ? <span className="banner-wrench">🔧</span> : <Avatar member={m} size="lg" />}
         <div>
           <div className="banner-dates">{formatRange(booking.start_date, booking.end_date)}</div>
-          <div className="banner-sub">{m?.name}{booking.note ? ` · ${booking.note}` : ''}</div>
+          <div className="banner-sub">
+            {isMaintenance ? (booking.note || 'Entretien / garage') : m?.name}
+            {!isMaintenance && booking.note ? ` · ${booking.note}` : ''}
+          </div>
         </div>
       </div>
 
-      {(current || recentlyEnded) && (
+      {!isMaintenance && (current || recentlyEnded) && (
         <button
           className="banner-trip-end"
           onClick={() => { haptic.success(); onOpenTripEnd?.(); }}

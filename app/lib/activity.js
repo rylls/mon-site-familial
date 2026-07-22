@@ -5,12 +5,15 @@ export function buildActivity({ bookings, comments, inventory, members }) {
   const items = [];
 
   for (const b of bookings) {
+    const isMaintenance = b.type === 'maintenance';
     items.push({
       id: `booking-${b.id}`,
       timestamp: b.created_at,
       member: memberById[b.member_id],
-      text: `a réservé le van du ${formatRange(b.start_date, b.end_date)}`,
-      icon: '🚐',
+      text: isMaintenance
+        ? `a bloqué le van pour entretien du ${formatRange(b.start_date, b.end_date)}${b.note ? ` (${b.note})` : ''}`
+        : `a réservé le van du ${formatRange(b.start_date, b.end_date)}`,
+      icon: isMaintenance ? '🔧' : '🚐',
     });
   }
 

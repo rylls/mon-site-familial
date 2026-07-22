@@ -226,6 +226,10 @@ input::placeholder{ color:var(--ink-faint); }
   background:rgba(94,132,166,0.15); border-color:rgba(94,132,166,0.4);
   color:#33566F;
 }
+.van-status-pill.maintenance{
+  background:rgba(107,91,77,0.15); border-color:rgba(107,91,77,0.4);
+  color:#4A3E33;
+}
 
 .notif-wrap{ position:relative; }
 .notif-bell{ position:relative; font-size:15px; }
@@ -572,6 +576,11 @@ input::placeholder{ color:var(--ink-faint); }
   justify-content:center;
   gap:14px;
   position:relative;
+}
+.banner-wrench{
+  width:60px; height:60px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:26px; background:rgba(255,255,255,0.25);
 }
 .banner-dates{
   font-family:'Caveat', cursive;
@@ -1075,6 +1084,7 @@ input::placeholder{ color:var(--ink-faint); }
 .range-badge-avatar{
   position:absolute; top:-3px; right:-3px; z-index:3;
 }
+.range-badge-wrench{ font-size:12px; line-height:1; }
 .day-cell.disabled{ opacity:.35; cursor:not-allowed; }
 
 /* ---------- Booking bar ---------- */
@@ -1103,6 +1113,12 @@ input::placeholder{ color:var(--ink-faint); }
   border:1.5px dashed var(--line);
 }
 .booking-sheet h2{ font-family:'Caveat', cursive; font-size:26px; font-weight:700; margin:0 0 12px; }
+.booking-type-toggle{ display:flex; gap:8px; margin-bottom:10px; }
+.booking-type-btn{
+  flex:1; padding:9px 10px; border-radius:12px; border:1.5px solid var(--line);
+  background:var(--card-soft); color:var(--ink-soft); font-weight:650; font-size:13px; cursor:pointer;
+}
+.booking-type-btn.active{ background:var(--rust); border-color:var(--rust); color:#fff; }
 .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .conflict-warning{
   background:rgba(192,69,58,0.1); color:#8C332A; border:1.5px solid rgba(192,69,58,0.28);
@@ -1124,6 +1140,12 @@ input::placeholder{ color:var(--ink-faint); }
 .ticket-dates{ font-size:13px; color:var(--ink-soft); }
 .ticket-note{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
 .ticket-conflict{ font-size:11.5px; color:#8C332A; margin-top:2px; font-weight:700; }
+.ticket-wrench{
+  width:36px; height:36px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--card-soft); border:1.5px solid var(--line); font-size:16px;
+}
+.ticket-maintenance .ticket-name{ color:#5B4C3F; }
 .ticket-edit{
   margin-left:auto; background:none; border:none; color:var(--ink-faint);
   cursor:pointer; font-size:15px; padding:4px 8px;

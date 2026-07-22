@@ -16,10 +16,10 @@ export async function getBookings() {
   return data;
 }
 
-export async function addBooking({ member_id, start_date, end_date, note }) {
+export async function addBooking({ member_id, start_date, end_date, note, type }) {
   const { error } = await supabaseAdmin
     .from('bookings')
-    .insert({ member_id, start_date, end_date, note: note || null });
+    .insert({ member_id, start_date, end_date, note: note || null, type: type || 'trip' });
   if (error) throw error;
   return getBookings();
 }
@@ -30,10 +30,10 @@ export async function deleteBooking(id) {
   return getBookings();
 }
 
-export async function editBooking(id, { start_date, end_date, note }) {
+export async function editBooking(id, { start_date, end_date, note, type }) {
   const { error } = await supabaseAdmin
     .from('bookings')
-    .update({ start_date, end_date, note: note || null })
+    .update({ start_date, end_date, note: note || null, type: type || 'trip' })
     .eq('id', id);
   if (error) throw error;
   return getBookings();

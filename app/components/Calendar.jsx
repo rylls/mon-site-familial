@@ -10,6 +10,7 @@ import { useToast } from './ToastProvider';
 
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 const WEEKDAY_NAMES = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+const MAINTENANCE_COLOR = '#6B5B4D';
 
 export default function Calendar({ members, bookings, onBookingsChange, comments, onCommentsChange, currentMember }) {
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
@@ -19,6 +20,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   const [note, setNote] = useState('');
   const [memberId, setMemberId] = useState(currentMember?.id || members[0]?.id);
   const [editingId, setEditingId] = useState(null);
+  const [bookingType, setBookingType] = useState('trip');
   const sheetRef = useRef(null);
   const showToast = useToast();
   const deleteTimersRef = useRef({});
@@ -55,7 +57,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   }
 
   function clearSelection() {
-    setStart(null); setEnd(null); setNote(''); setEditingId(null);
+    setStart(null); setEnd(null); setNote(''); setEditingId(null); setBookingType('trip');
   }
 
   function handleEdit(b) {
@@ -64,6 +66,7 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
     setEnd(parseDate(b.end_date));
     setNote(b.note || '');
     setMemberId(b.member_id);
+    setBookingType(b.type || 'trip');
     setEditingId(b.id);
     sheetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -72,20 +75,21 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
     if (!start || !memberId) return;
     const wasEditing = !!editingId;
     const updated = editingId
-      ? await editBooking(editingId, { start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note })
-      : await addBooking({ member_id: memberId, start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note });
+      ? await editBooking(editingId, { start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note, type: bookingType })
+      : await addBooking({ member_id: memberId, start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note, type: bookingType });
     haptic.success();
     onBookingsChange(updated);
-    showToast(wasEditing ? 'Trajet modifié' : 'Trajet réservé 🚐');
+    showToast(wasEditing ? 'Modifié' : bookingType === 'maintenance' ? 'Immobilisation ajoutée 🔧' : 'Trajet réservé 🚐');
     clearSelection();
   }
 
   function handleDelete(id) {
     haptic.delete();
     const snapshot = bookings;
+    const wasMaintenance = bookings.find((b) => b.id === id)?.type === 'maintenance';
     onBookingsChange(bookings.filter((b) => b.id !== id));
     if (editingId === id) clearSelection();
-    showToast('Trajet supprimé', {
+    showToast(wasMaintenance ? 'Immobilisation supprimée' : 'Trajet supprimé', {
       type: 'danger',
       duration: 5000,
       actionLabel: 'Annuler',
@@ -131,6 +135,10 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
             {m.name}
           </div>
         ))}
+        <div className="legend-chip">
+          <span className="legend-dot" style={{ background: MAINTENANCE_COLOR }}></span>
+          🔧 Entretien
+        </div>
       </div>
 
       <div className="calendar">
@@ -150,6 +158,8 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
             const dayBookings = bookings.filter((b) => cellDate >= parseDate(b.start_date) && cellDate <= parseDate(b.end_date));
             const primary = dayBookings[0];
             const pMember = primary ? memberById[primary.member_id] : null;
+            const isMaintenance = primary?.type === 'maintenance';
+            const cellColor = isMaintenance ? MAINTENANCE_COLOR : pMember?.color || '#999';
             const isBookingStart = primary && cellDate.toDateString() === parseDate(primary.start_date).toDateString();
             const isBookingEnd = primary && cellDate.toDateString() === parseDate(primary.end_date).toDateString();
             const isMultiDay = primary && primary.start_date !== primary.end_date;
@@ -168,12 +178,12 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
               (isSelecting || col === 0) && (start && end && cellDate >= rangeStart && cellDate <= rangeEnd) ? 'range-rounded-left' : '',
               (isSelectingEnd || col === 6) && (start && end && cellDate >= rangeStart && cellDate <= rangeEnd) ? 'range-rounded-right' : '',
             ].filter(Boolean).join(' ');
-            const label = `${cellDate.getDate()} ${MONTHS[cellDate.getMonth()]}${primary ? `, réservé par ${pMember?.name}` : ''}`;
+            const label = `${cellDate.getDate()} ${MONTHS[cellDate.getMonth()]}${primary ? (isMaintenance ? ', van chez le garagiste' : `, réservé par ${pMember?.name}`) : ''}`;
             return (
               <div
                 key={i}
                 className={cls}
-                style={primary ? { background: pMember?.color || '#999' } : undefined}
+                style={primary ? { background: cellColor } : undefined}
                 onClick={() => handleDayClick(cellDate)}
                 role="button"
                 tabIndex={isPast ? -1 : 0}
@@ -182,10 +192,14 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
                 onKeyDown={(e) => handleCellKeyDown(e, cellDate, isPast)}
               >
                 {primary && isBookingStart && isMultiDay && (
-                  <span className="range-badge-van"><MiniVanIcon size={13} color={pMember?.color || '#999'} /></span>
+                  <span className="range-badge-van">
+                    {isMaintenance ? <span className="range-badge-wrench">🔧</span> : <MiniVanIcon size={13} color={cellColor} />}
+                  </span>
                 )}
                 {primary && isBookingEnd && (
-                  <span className="range-badge-avatar"><Avatar member={pMember} size="badge" /></span>
+                  <span className="range-badge-avatar">
+                    {isMaintenance ? <span className="range-badge-wrench">🔧</span> : <Avatar member={pMember} size="badge" />}
+                  </span>
                 )}
                 <span className="day-num">{cellDate.getDate()}</span>
               </div>
@@ -197,18 +211,39 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
       {start && (
         <div className="booking-sheet" ref={sheetRef}>
           <h2>
-            {editingId ? 'Modifier le trajet · ' : ''}
+            {editingId ? 'Modifier · ' : ''}
             {formatRange(fmtDate(start), fmtDate(rangeEnd))}{end ? ` · ${nights} nuit${nights > 1 ? 's' : ''}` : ''}
           </h2>
           {hasConflict && <div className="conflict-warning">Attention : ces dates chevauchent déjà une réservation.</div>}
+          <div className="booking-type-toggle">
+            <button
+              type="button"
+              className={`booking-type-btn${bookingType === 'trip' ? ' active' : ''}`}
+              onClick={() => { haptic.tap(); setBookingType('trip'); }}
+            >
+              🚐 Trajet en famille
+            </button>
+            <button
+              type="button"
+              className={`booking-type-btn${bookingType === 'maintenance' ? ' active' : ''}`}
+              onClick={() => { haptic.tap(); setBookingType('maintenance'); }}
+            >
+              🔧 Entretien / garage
+            </button>
+          </div>
           <select className="field" value={memberId} onChange={(e) => setMemberId(e.target.value)}>
             {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
-          <input type="text" placeholder="Motif (optionnel) — ex : week-end à la mer" value={note} onChange={(e) => setNote(e.target.value)} />
+          <input
+            type="text"
+            placeholder={bookingType === 'maintenance' ? 'Motif — ex : contrôle technique, vidange…' : 'Motif (optionnel) — ex : week-end à la mer'}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn" onClick={clearSelection}>Annuler</button>
             <button className="btn primary" style={{ flex: 1 }} onClick={handleConfirm} disabled={!end}>
-              {!end ? 'Choisissez la date de retour' : editingId ? 'Enregistrer les modifications' : 'Réserver le van'}
+              {!end ? 'Choisissez la date de retour' : editingId ? 'Enregistrer les modifications' : bookingType === 'maintenance' ? 'Bloquer ces dates' : 'Réserver le van'}
             </button>
           </div>
         </div>
@@ -237,15 +272,17 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
       {upcoming.length === 0 && <div className="empty-state">Aucun trajet prévu. Sélectionnez des dates ci-dessus.</div>}
       {upcoming.map((b) => {
         const m = memberById[b.member_id];
+        const isMaintenance = b.type === 'maintenance';
         const conflict = bookings.some((o) => o.id !== b.id && overlaps(parseDate(b.start_date), parseDate(b.end_date), parseDate(o.start_date), parseDate(o.end_date)));
         return (
-          <div key={b.id} className="ticket" style={{ borderLeftColor: m?.color }}>
+          <div key={b.id} className={`ticket${isMaintenance ? ' ticket-maintenance' : ''}`} style={{ borderLeftColor: isMaintenance ? MAINTENANCE_COLOR : m?.color }}>
             <div className="ticket-top">
-              <Avatar member={m} />
+              {isMaintenance ? <span className="ticket-wrench">🔧</span> : <Avatar member={m} />}
               <div style={{ flex: 1 }}>
-                <div className="ticket-name">{m?.name}</div>
+                <div className="ticket-name">{isMaintenance ? (b.note || 'Entretien / garage') : m?.name}</div>
                 <div className="ticket-dates">{formatRange(b.start_date, b.end_date)}</div>
-                {b.note && <div className="ticket-note">{b.note}</div>}
+                {!isMaintenance && b.note && <div className="ticket-note">{b.note}</div>}
+                {isMaintenance && <div className="ticket-note">Enregistré par {m?.name}</div>}
                 {conflict && <div className="ticket-conflict">Chevauche une autre réservation</div>}
               </div>
               <button className="ticket-edit" aria-label="Modifier" onClick={() => handleEdit(b)}>✎</button>

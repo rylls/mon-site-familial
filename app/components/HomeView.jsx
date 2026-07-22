@@ -334,7 +334,7 @@ function MaintenanceCard({ maintenanceItems, currentKm, onGoToTab }) {
 
 function StatsCard({ bookings, mileageLogs, members }) {
   const year = new Date().getFullYear();
-  const thisYearBookings = bookings.filter((b) => parseDate(b.start_date).getFullYear() === year);
+  const thisYearBookings = bookings.filter((b) => b.type !== 'maintenance' && parseDate(b.start_date).getFullYear() === year);
   const nights = thisYearBookings.reduce((sum, b) => sum + Math.max(1, Math.round((parseDate(b.end_date) - parseDate(b.start_date)) / 86400000)), 0);
   const avgNights = thisYearBookings.length > 0 ? Math.round((nights / thisYearBookings.length) * 10) / 10 : 0;
 
@@ -701,15 +701,15 @@ export default function HomeView({
   const memberById = Object.fromEntries(members.map((m) => [m.id, m]));
   const today = startOfToday();
 
-  const currentTrip = bookings.find((b) => parseDate(b.start_date) <= today && today <= parseDate(b.end_date));
+  const currentTrip = bookings.find((b) => b.type !== 'maintenance' && parseDate(b.start_date) <= today && today <= parseDate(b.end_date));
   const nextUpcoming = bookings
-    .filter((b) => parseDate(b.start_date) > today)
+    .filter((b) => b.type !== 'maintenance' && parseDate(b.start_date) > today)
     .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))[0];
   const trip = currentTrip || nextUpcoming;
   const isActive = !!currentTrip;
 
   const pastTrip = bookings
-    .filter((b) => parseDate(b.end_date) < today && b.note)
+    .filter((b) => b.type !== 'maintenance' && parseDate(b.end_date) < today && b.note)
     .sort((a, b) => parseDate(b.end_date) - parseDate(a.end_date))[0];
 
   return (

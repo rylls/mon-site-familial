@@ -32,6 +32,12 @@ create table if not exists bookings (
 -- (popup automatique : consommables + kilométrage).
 alter table bookings add column if not exists trip_end_ack boolean not null default false;
 
+-- Type de réservation : trajet en famille ou immobilisation pour entretien
+-- (garagiste, contrôle technique...). Bloque aussi le calendrier.
+alter table bookings add column if not exists type text not null default 'trip';
+alter table bookings drop constraint if exists bookings_type_check;
+alter table bookings add constraint bookings_type_check check (type in ('trip','maintenance'));
+
 -- Inventaire embarqué dans le van, organisé par zone (pour le schéma en coupe)
 create table if not exists inventory_items (
   id uuid primary key default gen_random_uuid(),

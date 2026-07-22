@@ -73,12 +73,13 @@ function AppShellInner({
 
   const today = startOfToday();
   const isVanOut = bookings.some((b) => parseDate(b.start_date) <= today && today <= parseDate(b.end_date));
+  const currentMaintenanceBooking = bookings.find((b) => b.type === 'maintenance' && parseDate(b.start_date) <= today && today <= parseDate(b.end_date));
 
   const currentMember = members.find((m) => m.id === profileId) || null;
   useEffect(() => {
     if (!currentMember) return;
     const pending = bookings.find((b) => {
-      if (b.member_id !== currentMember.id || b.trip_end_ack) return false;
+      if (b.type === 'maintenance' || b.member_id !== currentMember.id || b.trip_end_ack) return false;
       const daysSinceEnd = Math.round((today - parseDate(b.end_date)) / 86400000);
       return daysSinceEnd > 0 && daysSinceEnd <= 3;
     });
@@ -100,7 +101,7 @@ function AppShellInner({
   if (currentMember) {
     bookings
       .filter((b) => {
-        if (b.member_id !== currentMember.id || b.trip_end_ack) return false;
+        if (b.type === 'maintenance' || b.member_id !== currentMember.id || b.trip_end_ack) return false;
         const daysSinceEnd = Math.round((today - parseDate(b.end_date)) / 86400000);
         return daysSinceEnd > 0 && daysSinceEnd <= 3;
       })
@@ -171,9 +172,9 @@ function AppShellInner({
             <p>Interface de réservation</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span className={`van-status-pill${isVanOut ? ' out' : ''}`}>
-              {isVanOut ? '🚐' : '✅'}
-              <span>{isVanOut ? 'En vadrouille' : 'Van disponible'}</span>
+            <span className={`van-status-pill${isVanOut ? ' out' : ''}${currentMaintenanceBooking ? ' maintenance' : ''}`}>
+              {currentMaintenanceBooking ? '🔧' : isVanOut ? '🚐' : '✅'}
+              <span>{currentMaintenanceBooking ? 'Chez le garage' : isVanOut ? 'En vadrouille' : 'Van disponible'}</span>
             </span>
             {maintenanceDueCount > 0 && (
               <button
