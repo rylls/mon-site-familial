@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState, Suspense } from 'react';
-import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Avatar from './Avatar';
 import ProfilePicker from './ProfilePicker';
@@ -21,8 +20,6 @@ import { buildActivity } from '../lib/activity';
 import { getMaintenanceStatus, STATUS_LABELS } from '../lib/maintenance';
 import { parseDate, startOfToday } from '../lib/dates';
 import { haptic } from '../lib/haptics';
-
-const MapView = dynamic(() => import('./MapView'), { ssr: false });
 
 const COOKIE_NAME = 'van_profile';
 const LAST_SEEN_KEY = 'wouchi_last_seen';
@@ -45,13 +42,12 @@ function AppShellInner({
   activityClearedAt: initialActivityClearedAt,
   importantInfo: initialImportantInfo,
   ideas: initialIdeas,
-  sleepSpots: initialSleepSpots,
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab');
   const [profileId, setProfileId] = useState(undefined);
-  const [tab, setTab] = useState(['accueil', 'calendrier', 'van', 'carte', 'activite', 'entretien'].includes(urlTab) ? urlTab : 'accueil');
+  const [tab, setTab] = useState(['accueil', 'calendrier', 'van', 'activite', 'entretien'].includes(urlTab) ? urlTab : 'accueil');
   const [members, setMembers] = useState(initialMembers);
   const [bookings, setBookings] = useState(initialBookings);
   const [inventory, setInventory] = useState(initialInventory);
@@ -61,7 +57,6 @@ function AppShellInner({
   const [activityClearedAt, setActivityClearedAt] = useState(initialActivityClearedAt);
   const [importantInfo, setImportantInfo] = useState(initialImportantInfo || []);
   const [ideas, setIdeas] = useState(initialIdeas || []);
-  const [sleepSpots, setSleepSpots] = useState(initialSleepSpots || []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tripEndOpen, setTripEndOpen] = useState(false);
   const [tripEndBooking, setTripEndBooking] = useState(null);
@@ -237,9 +232,6 @@ function AppShellInner({
           <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => changeTab('van')}>
             <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> Le van
           </button>
-          <button className={`tab${tab === 'carte' ? ' active' : ''}`} onClick={() => changeTab('carte')}>
-            <span>🗺️</span> Carte
-          </button>
           <button className={`tab${tab === 'activite' ? ' active' : ''}`} onClick={() => changeTab('activite')}>
             <span>📖</span> Activité
             {hasNewActivity && <span className="tab-dot" />}
@@ -282,14 +274,6 @@ function AppShellInner({
             onItemsChange={setInventory}
             comments={comments}
             onCommentsChange={setComments}
-            members={members}
-            currentMember={currentMember}
-          />
-        )}
-        {tab === 'carte' && (
-          <MapView
-            spots={sleepSpots}
-            onSpotsChange={setSleepSpots}
             members={members}
             currentMember={currentMember}
           />

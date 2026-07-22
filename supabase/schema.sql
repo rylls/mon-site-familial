@@ -185,27 +185,12 @@ create table if not exists ideas (
   created_at timestamptz not null default now()
 );
 
--- Carte des spots où la famille a dormi avec le van : un drapeau par membre,
--- avec photo et avis optionnels.
-create table if not exists sleep_spots (
-  id uuid primary key default gen_random_uuid(),
-  member_id text not null references members(id),
-  lat double precision not null,
-  lng double precision not null,
-  name text,
-  note text,
-  photo_url text,
-  created_at timestamptz not null default now()
-);
-
--- Bucket public pour les photos des spots (mêmes principes que "important-info").
-insert into storage.buckets (id, name, public)
-values ('sleep-spots', 'sleep-spots', true)
-on conflict (id) do nothing;
-
+-- La carte des spots dormis a été retirée de l'app : on nettoie la table,
+-- le bucket photo et sa policy s'ils avaient été créés.
 drop policy if exists "Public read sleep-spots" on storage.objects;
-create policy "Public read sleep-spots" on storage.objects
-  for select using (bucket_id = 'sleep-spots');
+delete from storage.objects where bucket_id = 'sleep-spots';
+delete from storage.buckets where id = 'sleep-spots';
+drop table if exists sleep_spots;
 
 -- RLS activée : aucune policy publique. L'app utilise la clé "service_role"
 -- côté serveur (elle contourne toujours RLS), donc une clé anon fuitée
@@ -219,4 +204,3 @@ alter table maintenance_items enable row level security;
 alter table app_settings enable row level security;
 alter table important_info enable row level security;
 alter table ideas enable row level security;
-alter table sleep_spots enable row level security;
