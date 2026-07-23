@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { verifySessionToken } from './lib/session';
 
-export function middleware(request) {
+export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
   const isPublic =
@@ -15,9 +16,8 @@ export function middleware(request) {
   }
 
   const session = request.cookies.get('wouchi_session')?.value;
-  const expected = process.env.SITE_PASSWORD;
 
-  if (!session || session !== expected) {
+  if (!(await verifySessionToken(session))) {
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }
