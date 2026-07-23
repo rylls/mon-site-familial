@@ -17,7 +17,7 @@ import IdeaBox from './IdeaBox';
 import { ToastProvider } from './ToastProvider';
 import Mountains from './decor/Mountains';
 import SideDoodles from './decor/SideDoodles';
-import { PineTreeIcon } from './decor/DoodleIcons';
+import { PineTreeIcon, HomeIcon, CalendarIcon, BookIcon, WrenchIcon } from './decor/DoodleIcons';
 import { buildActivity } from '../lib/activity';
 import { getMaintenanceStatus, STATUS_LABELS } from '../lib/maintenance';
 import { parseDate, startOfToday } from '../lib/dates';
@@ -253,20 +253,20 @@ function AppShellInner({
 
         <div className="tabs">
           <button className={`tab${tab === 'accueil' ? ' active' : ''}`} onClick={() => changeTab('accueil')} aria-label="Accueil" title="Accueil">
-            <span>🏠</span> <span className="tab-label">Accueil</span>
+            <HomeIcon size={15} color={tab === 'accueil' ? '#C1622D' : '#8A6F4E'} /> <span className="tab-label">Accueil</span>
           </button>
           <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => changeTab('calendrier')} aria-label="Calendrier" title="Calendrier">
-            <span>📅</span> <span className="tab-label">Calendrier</span>
+            <CalendarIcon size={15} color={tab === 'calendrier' ? '#C1622D' : '#8A6F4E'} /> <span className="tab-label">Calendrier</span>
           </button>
           <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => changeTab('van')} aria-label="Le van" title="Le van">
             <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> <span className="tab-label">Le van</span>
           </button>
           <button className={`tab${tab === 'activite' ? ' active' : ''}`} onClick={() => changeTab('activite')} aria-label="Activité" title="Activité">
-            <span>📖</span> <span className="tab-label">Activité</span>
+            <BookIcon size={15} color={tab === 'activite' ? '#C1622D' : '#8A6F4E'} /> <span className="tab-label">Activité</span>
             {hasNewActivity && <span className="tab-dot" />}
           </button>
           <button className={`tab${tab === 'entretien' ? ' active' : ''}`} onClick={() => changeTab('entretien')} aria-label="Entretien" title="Entretien">
-            <span>🔧</span> <span className="tab-label">Entretien</span>
+            <WrenchIcon size={15} color={tab === 'entretien' ? '#C1622D' : '#8A6F4E'} /> <span className="tab-label">Entretien</span>
             {maintenanceDueCount > 0 && <span className="zone-tab-count">{maintenanceDueCount}</span>}
           </button>
         </div>

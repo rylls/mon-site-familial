@@ -157,6 +157,29 @@ export function OilCanIcon({ size = 20, color = '#3B2B1D' }) {
   );
 }
 
+export function HomeIcon({ size = 18, color = '#8A6F4E' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 11.5 L12 4 L20 11.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M6 10 V20 H18 V10" fill={color} stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+      <rect x="10" y="14" width="4" height="6" fill="#FBF2DE" />
+    </svg>
+  );
+}
+
+export function CalendarIcon({ size = 18, color = '#8A6F4E' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3.5" y="5" width="17" height="15" rx="2.2" fill="#FBF2DE" stroke={color} strokeWidth="1.5" />
+      <path d="M3.5 9.5 H20.5" stroke={color} strokeWidth="1.5" />
+      <path d="M8 3 V6.5 M16 3 V6.5" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="8.2" cy="13.3" r="1.15" fill={color} />
+      <circle cx="12" cy="13.3" r="1.15" fill={color} />
+      <circle cx="8.2" cy="16.8" r="1.15" fill={color} />
+    </svg>
+  );
+}
+
 export function LightbulbIcon({ size = 26, color = '#E0A83E' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
