@@ -13,7 +13,15 @@ const TILE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 130">
 
 const TILE_URL = `url("data:image/svg+xml,${encodeURIComponent(TILE)}")`;
 
-export default function Mountains() {
+export default function Mountains({ image }) {
+  if (image) {
+    return (
+      <div className="mountains-band mountains-band-custom" aria-hidden="true">
+        <img src={image} alt="" className="mountains-band-img" />
+      </div>
+    );
+  }
+
   return (
     <div className="mountains-band" aria-hidden="true" style={{ backgroundImage: TILE_URL }}>
       <div className="mountains-sun" />
