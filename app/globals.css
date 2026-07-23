@@ -719,6 +719,13 @@ input::placeholder{ color:var(--ink-faint); }
   gap:12px;
   margin-bottom:14px;
 }
+@media (min-width:900px){
+  /* Sur grand écran, les 4 cartes tiennent sur une seule ligne plutôt que de
+     rester en grille 2x2 avec chaque carte étirée sur toute la largeur
+     restante — ça évite l'effet "page mobile juste agrandie". */
+  .home-grid{ grid-template-columns:repeat(4, 1fr); }
+  .wrap{ max-width:1300px; }
+}
 .home-card{
   background:var(--card);
   border:1.5px solid var(--line);
