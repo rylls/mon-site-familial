@@ -160,25 +160,12 @@ export async function addMember({ name, role, color, icon }) {
 }
 
 export async function deleteMember(id) {
-  const { error: commentsError } = await supabaseAdmin.from('comments').delete().eq('member_id', id);
-  if (commentsError) throw commentsError;
-
-  const { error: bookingsError } = await supabaseAdmin.from('bookings').delete().eq('member_id', id);
-  if (bookingsError) throw bookingsError;
-
-  const { error: mileageError } = await supabaseAdmin
-    .from('mileage_logs')
-    .update({ recorded_by: null })
-    .eq('recorded_by', id);
-  if (mileageError) throw mileageError;
-
-  const { error: inventoryError } = await supabaseAdmin
-    .from('inventory_items')
-    .update({ updated_by: null })
-    .eq('updated_by', id);
-  if (inventoryError) throw inventoryError;
-
-  const { error } = await supabaseAdmin.from('members').delete().eq('id', id);
+  // Les 5 suppressions/mises à jour (comments, bookings, mileage_logs,
+  // inventory_items, members) tournent dans la fonction Postgres
+  // `delete_member`, exécutée comme une seule transaction : si l'une d'elles
+  // échoue, tout est annulé plutôt que de laisser la base dans un état
+  // intermédiaire incohérent.
+  const { error } = await supabaseAdmin.rpc('delete_member', { p_member_id: id });
   if (error) throw error;
 
   const [members, bookings, comments] = await Promise.all([getMembers(), getBookings(), getComments()]);
