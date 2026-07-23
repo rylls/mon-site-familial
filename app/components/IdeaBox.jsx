@@ -98,7 +98,7 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
         <div className="overlay" onClick={() => setOpen(false)}>
           <div className="idea-card" onClick={(e) => e.stopPropagation()}>
             <h1>💡 Boîte à idées</h1>
-            <p>Une idée pour le van, un voyage, une amélioration de l'appli ? Note-la ici, visible par toute la famille.</p>
+            <p>Une idée pour le van, un voyage, une amélioration de l&apos;appli ? Note-la ici, visible par toute la famille.</p>
 
             <div className="idea-add">
               <textarea
@@ -112,7 +112,7 @@ export default function IdeaBox({ ideas, onIdeasChange, members, currentMember }
               </button>
             </div>
 
-            {ideas.length === 0 && <div className="idea-empty">Aucune idée pour l'instant.</div>}
+            {ideas.length === 0 && <div className="idea-empty">Aucune idée pour l&apos;instant.</div>}
 
             {pending.length > 0 && (
               <div className="idea-list">

@@ -38,7 +38,7 @@ export default function ActivityFeed({ activity, onClear }) {
           </button>
         )}
       </div>
-      {activity.length === 0 && <div className="empty-state">Rien à signaler pour l'instant.</div>}
+      {activity.length === 0 && <div className="empty-state">Rien à signaler pour l&apos;instant.</div>}
       {activity.map((a) => (
         <div key={a.id} className="activity-row">
           <Avatar member={a.member} size="sm" />

@@ -30,7 +30,7 @@ export default function NotificationBell({ items }) {
         <div className="notif-panel">
           <div className="notif-panel-title">Notifications</div>
           {items.length === 0 ? (
-            <div className="notif-empty">Rien à signaler pour l'instant.</div>
+            <div className="notif-empty">Rien à signaler pour l&apos;instant.</div>
           ) : (
             items.map((n) => (
               <div key={n.id} className="notif-item">

@@ -49,7 +49,7 @@ export default function TripEndModal({ items, onItemsChange, currentMember, book
     <div className="overlay" onClick={onClose}>
       <div className="tripend-card" onClick={(e) => e.stopPropagation()}>
         <h1>Bon retour ! 🚐</h1>
-        <p>Fais le point sur ce qu'il reste, zone par zone. Tu peux replier ce qui ne t'intéresse pas.</p>
+        <p>Fais le point sur ce qu&apos;il reste, zone par zone. Tu peux replier ce qui ne t&apos;intéresse pas.</p>
 
         <div className="tripend-km">
           <label htmlFor="tripend-km-input">Kilométrage actuel{currentKm != null ? ` (dernier relevé : ${currentKm.toLocaleString('fr-FR')} km)` : ''}</label>

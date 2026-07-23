@@ -93,7 +93,7 @@ export default function VanInventory({ items, onItemsChange, comments, onComment
         <button className="btn primary" onClick={handleAdd} disabled={!newName.trim()}>Ajouter</button>
       </div>
 
-      {zoneItems.length === 0 && <div className="empty-state">Rien de référencé ici pour l'instant.</div>}
+      {zoneItems.length === 0 && <div className="empty-state">Rien de référencé ici pour l&apos;instant.</div>}
       {zoneItems.map((item) => (
         <SwipeableRow key={item.id} onSwipeLeft={() => handleDelete(item.id, item.name)} leftLabel="🗑 Supprimer">
           <div className="inv-item">

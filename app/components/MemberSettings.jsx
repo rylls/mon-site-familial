@@ -69,7 +69,7 @@ export default function MemberSettings({ members, onMembersChange, onBookingsCha
     <div className="overlay" onClick={onClose}>
       <div className="settings-card" onClick={(e) => e.stopPropagation()}>
         <h1>Réglages de la famille</h1>
-        <p>Modifie le nom, le rôle, l'icône ou la couleur de chaque profil.</p>
+        <p>Modifie le nom, le rôle, l&apos;icône ou la couleur de chaque profil.</p>
         {members.map((m) => {
           const draft = drafts[m.id] || { name: m.name, color: m.color, role: m.role, icon: m.icon || null };
           const dirty = draft.name !== m.name || draft.color !== m.color || draft.role !== m.role || (draft.icon || null) !== (m.icon || null);

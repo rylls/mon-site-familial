@@ -126,7 +126,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
       </div>
 
       <div className="section-title-row">
-        <h2 className="section-title"><span>🔧</span> Plan d'entretien</h2>
+        <h2 className="section-title"><span>🔧</span> Plan d&apos;entretien</h2>
         <button className="btn small" onClick={() => { haptic.tap(); setAddingNew((v) => !v); }}>
           {addingNew ? 'Annuler' : '+ Ajouter un poste'}
         </button>
@@ -194,7 +194,7 @@ export default function MaintenanceView({ mileageLogs, onMileageLogsChange, main
             </div>
           ) : (
             <div className="maint-actions">
-              <button className="btn small" onClick={() => handleMarkDone(item.id)} disabled={currentKm == null}>Fait aujourd'hui</button>
+              <button className="btn small" onClick={() => handleMarkDone(item.id)} disabled={currentKm == null}>Fait aujourd&apos;hui</button>
               <button className="btn small" onClick={() => startEdit(item)}>Modifier</button>
               <button className="btn small danger" onClick={() => handleDelete(item.id)}>Supprimer</button>
             </div>
