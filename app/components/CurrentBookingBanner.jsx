@@ -47,12 +47,12 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
     <div className="banner" style={{ background: `linear-gradient(180deg, ${bannerColor || '#333'}, ${shade(bannerColor)})` }}>
       <div className="banner-van-strip">
         <div className="banner-van-wrap">
-          <Image src="/images/van-banner.png" alt="" fill className="banner-van-img" priority />
+          <Image src="/images/van-banner.png" alt="" fill sizes="160px" className="banner-van-img" priority />
           <div className="banner-wheel-pos rear">
-            <Image src="/images/van-wheel.png" alt="" fill />
+            <Image src="/images/van-wheel.png" alt="" fill sizes="30px" />
           </div>
           <div className="banner-wheel-pos front">
-            <Image src="/images/van-wheel.png" alt="" fill />
+            <Image src="/images/van-wheel.png" alt="" fill sizes="30px" />
           </div>
         </div>
       </div>

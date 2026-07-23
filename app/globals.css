@@ -179,9 +179,17 @@ input::placeholder{ color:var(--ink-faint); }
   display:flex;
   align-items:center;
   justify-content:space-between;
+  gap:10px;
   padding:12px 24px;
   max-width:1100px;
   margin:0 auto;
+}
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
 }
 .brand{
   display:flex;
@@ -238,6 +246,21 @@ input::placeholder{ color:var(--ink-faint); }
   background:rgba(107,91,77,0.15); border-color:rgba(107,91,77,0.4);
   color:#4A3E33;
 }
+
+.header-menu-wrap{ position:relative; }
+.header-menu-panel{
+  position:absolute; top:calc(100% + 8px); right:0;
+  width:220px; max-width:80vw;
+  background:var(--card); border:1.5px solid var(--line); border-radius:16px;
+  box-shadow:var(--shadow-lg); padding:6px; z-index:40;
+}
+.header-menu-item{
+  display:flex; align-items:center; gap:10px; width:100%;
+  background:none; border:none; text-align:left; cursor:pointer;
+  padding:9px 10px; border-radius:10px; font-size:13.5px; font-weight:600; color:var(--ink);
+}
+.header-menu-item:hover{ background:var(--card-soft); }
+.header-menu-icon{ font-size:15px; flex-shrink:0; }
 
 .notif-wrap{ position:relative; }
 .notif-bell{ position:relative; font-size:15px; }
@@ -824,7 +847,7 @@ input::placeholder{ color:var(--ink-faint); }
   margin-bottom:2px;
 }
 .stats-ranking-row{ display:flex; align-items:center; gap:8px; }
-.stats-ranking-name{ font-size:12px; color:var(--ink); flex:0 1 auto; max-width:40%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stats-ranking-name{ font-size:12px; color:var(--ink); flex:0 1 auto; max-width:40%; line-height:1.25; }
 .stats-ranking-bar{ flex:1; height:6px; border-radius:980px; background:var(--card-soft); overflow:hidden; }
 .stats-ranking-fill{ height:100%; border-radius:980px; }
 .stats-ranking-count{ font-size:11.5px; font-weight:700; color:var(--ink-soft); width:16px; text-align:right; }
@@ -870,7 +893,7 @@ input::placeholder{ color:var(--ink-faint); }
   touch-action:none;
 }
 .info-drag-handle:active{ background:var(--card-soft); }
-.info-block-header{ display:flex; align-items:center; gap:4px; }
+.info-block-header{ display:flex; align-items:center; gap:10px; }
 .info-block-title{ font-weight:700; font-size:14.5px; color:var(--ink); }
 .info-block-title-btn{
   display:flex;
@@ -897,7 +920,7 @@ input::placeholder{ color:var(--ink-faint); }
   flex-shrink:0;
 }
 .info-chevron.collapsed{ transform:rotate(-90deg); }
-.info-block-actions{ display:flex; gap:4px; flex-shrink:0; }
+.info-block-actions{ display:flex; gap:8px; flex-shrink:0; }
 .info-block-actions .btn.small{ min-width:38px; min-height:38px; padding:8px; display:flex; align-items:center; justify-content:center; }
 .info-block-body-box{
   background:var(--card-soft);
@@ -1518,4 +1541,13 @@ input::placeholder{ color:var(--ink-faint); }
   .tabs{ overflow-x:auto; scrollbar-width:none; }
   .tabs::-webkit-scrollbar{ display:none; }
   .tab{ flex:0 0 auto; padding:8px 14px; }
+}
+
+@media (max-width:560px){
+  /* En dessous de cette largeur, les 5 onglets ne tiennent plus avec leur
+     libellé : on repasse en icône seule (avec aria-label/title conservés)
+     plutôt que de compter sur le scroll horizontal caché, peu visible. */
+  .tabs{ overflow-x:visible; }
+  .tab{ flex:1 1 0; padding:9px 4px; }
+  .tab-label{ display:none; }
 }

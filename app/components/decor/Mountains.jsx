@@ -18,7 +18,7 @@ export default function Mountains({ image }) {
   if (image) {
     return (
       <div className="mountains-band mountains-band-custom" aria-hidden="true">
-        <Image src={image} alt="" fill className="mountains-band-img" priority />
+        <Image src={image} alt="" fill sizes="100vw" className="mountains-band-img" priority />
       </div>
     );
   }

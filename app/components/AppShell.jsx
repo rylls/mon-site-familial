@@ -12,6 +12,7 @@ import MemberSettings from './MemberSettings';
 import MaintenanceView from './MaintenanceView';
 import TripEndModal from './TripEndModal';
 import NotificationBell from './NotificationBell';
+import HeaderMenu from './HeaderMenu';
 import IdeaBox from './IdeaBox';
 import { ToastProvider } from './ToastProvider';
 import Mountains from './decor/Mountains';
@@ -194,10 +195,10 @@ function AppShellInner({
             <h1>Wouchi</h1>
             <p>Interface de réservation</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="header-actions">
             <span className={`van-status-pill${isVanOut ? ' out' : ''}${currentMaintenanceBooking ? ' maintenance' : ''}`}>
               {currentMaintenanceBooking ? '🔧' : isVanOut ? '🚐' : '✅'}
-              <span>{currentMaintenanceBooking ? 'Chez le garage' : isVanOut ? 'En vadrouille' : 'Van disponible'}</span>
+              <span className="van-status-label">{currentMaintenanceBooking ? 'Chez le garage' : isVanOut ? 'En vadrouille' : 'Van disponible'}</span>
             </span>
             {maintenanceDueCount > 0 && (
               <button
@@ -208,14 +209,6 @@ function AppShellInner({
                 🔧 {maintenanceDueCount}
               </button>
             )}
-            <button
-              className="btn small"
-              aria-label="Faire le point sur le van"
-              title="Faire le point sur le van"
-              onClick={() => { haptic.tap(); setTripEndBooking(null); setTripEndOpen(true); }}
-            >
-              📋
-            </button>
             <NotificationBell items={notifications} />
             {currentMember && (
               <div className="current-user" onClick={() => { haptic.tap(); setProfileId(null); }} title="Changer de profil">
@@ -223,17 +216,28 @@ function AppShellInner({
                 <span>{currentMember.name}</span>
               </div>
             )}
-            <button className="btn small" aria-label="Réglages" onClick={() => { haptic.tap(); setSettingsOpen(true); }}>⚙️</button>
-            <button
-              className="btn small"
-              onClick={async () => {
-                haptic.tap();
-                await fetch('/api/logout', { method: 'POST' });
-                window.location.href = '/login';
-              }}
-            >
-              Quitter
-            </button>
+            <HeaderMenu
+              items={[
+                {
+                  label: 'Faire le point sur le van',
+                  icon: '📋',
+                  onClick: () => { setTripEndBooking(null); setTripEndOpen(true); },
+                },
+                {
+                  label: 'Réglages',
+                  icon: '⚙️',
+                  onClick: () => setSettingsOpen(true),
+                },
+                {
+                  label: 'Quitter',
+                  icon: '🚪',
+                  onClick: async () => {
+                    await fetch('/api/logout', { method: 'POST' });
+                    window.location.href = '/login';
+                  },
+                },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -248,21 +252,21 @@ function AppShellInner({
         />
 
         <div className="tabs">
-          <button className={`tab${tab === 'accueil' ? ' active' : ''}`} onClick={() => changeTab('accueil')}>
-            <span>🏠</span> Accueil
+          <button className={`tab${tab === 'accueil' ? ' active' : ''}`} onClick={() => changeTab('accueil')} aria-label="Accueil" title="Accueil">
+            <span>🏠</span> <span className="tab-label">Accueil</span>
           </button>
-          <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => changeTab('calendrier')}>
-            <span>📅</span> Calendrier
+          <button className={`tab${tab === 'calendrier' ? ' active' : ''}`} onClick={() => changeTab('calendrier')} aria-label="Calendrier" title="Calendrier">
+            <span>📅</span> <span className="tab-label">Calendrier</span>
           </button>
-          <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => changeTab('van')}>
-            <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> Le van
+          <button className={`tab${tab === 'van' ? ' active' : ''}`} onClick={() => changeTab('van')} aria-label="Le van" title="Le van">
+            <PineTreeIcon size={15} color={tab === 'van' ? '#C1622D' : '#8A6F4E'} /> <span className="tab-label">Le van</span>
           </button>
-          <button className={`tab${tab === 'activite' ? ' active' : ''}`} onClick={() => changeTab('activite')}>
-            <span>📖</span> Activité
+          <button className={`tab${tab === 'activite' ? ' active' : ''}`} onClick={() => changeTab('activite')} aria-label="Activité" title="Activité">
+            <span>📖</span> <span className="tab-label">Activité</span>
             {hasNewActivity && <span className="tab-dot" />}
           </button>
-          <button className={`tab${tab === 'entretien' ? ' active' : ''}`} onClick={() => changeTab('entretien')}>
-            <span>🔧</span> Entretien
+          <button className={`tab${tab === 'entretien' ? ' active' : ''}`} onClick={() => changeTab('entretien')} aria-label="Entretien" title="Entretien">
+            <span>🔧</span> <span className="tab-label">Entretien</span>
             {maintenanceDueCount > 0 && <span className="zone-tab-count">{maintenanceDueCount}</span>}
           </button>
         </div>
