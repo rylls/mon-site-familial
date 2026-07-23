@@ -12,12 +12,9 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
   const today = startOfToday();
 
   const isCurrent = (b) => parseDate(b.start_date) <= today && today <= parseDate(b.end_date);
-  const daysSinceEnd = (b) => Math.round((today - parseDate(b.end_date)) / 86400000);
-  const isRecentlyEnded = (b) => !isCurrent(b) && daysSinceEnd(b) > 0 && daysSinceEnd(b) <= 3;
 
   const trips = [
     ...bookings.filter(isCurrent).sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date)),
-    ...bookings.filter(isRecentlyEnded).sort((a, b) => parseDate(b.end_date) - parseDate(a.end_date)),
     ...bookings
       .filter((b) => parseDate(b.start_date) > today)
       .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date)),
@@ -35,7 +32,6 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
   const safeIndex = Math.min(index, trips.length - 1);
   const booking = trips[safeIndex];
   const current = isCurrent(booking);
-  const recentlyEnded = isRecentlyEnded(booking);
   const isMaintenance = booking.type === 'maintenance';
   const m = memberById[booking.member_id];
   const bannerColor = isMaintenance ? MAINTENANCE_COLOR : m?.color;
@@ -74,12 +70,10 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
 
       <div className="banner-eyebrow">
         {isMaintenance
-          ? (current ? 'Chez le garage en ce moment' : recentlyEnded ? 'Retour de garage récent' : daysLeft === 0 ? 'Départ au garage aujourd\'hui' : `Dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`)
+          ? (current ? 'Chez le garage en ce moment' : daysLeft === 0 ? 'Départ au garage aujourd\'hui' : `Dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`)
           : current
             ? 'Sur la route en ce moment'
-            : recentlyEnded
-              ? 'Trajet terminé récemment'
-              : daysLeft === 0 ? 'Départ aujourd\'hui' : `Dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`}
+            : daysLeft === 0 ? 'Départ aujourd\'hui' : `Dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`}
       </div>
       <div className="banner-main">
         {isMaintenance ? <span className="banner-wrench">🔧</span> : <Avatar member={m} size="lg" />}
@@ -92,12 +86,12 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
         </div>
       </div>
 
-      {!isMaintenance && (current || recentlyEnded) && (
+      {!isMaintenance && current && (
         <button
           className="banner-trip-end"
           onClick={() => { haptic.success(); onOpenTripEnd?.(); }}
         >
-          ✅ {current ? 'Voyage terminé' : 'Faire le point'} — vérifier le van
+          ✅ Voyage terminé — vérifier le van
         </button>
       )}
     </div>
