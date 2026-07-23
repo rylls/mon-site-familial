@@ -207,6 +207,7 @@ alter table inventory_items add column if not exists deleted_at timestamptz;
 alter table maintenance_items add column if not exists deleted_at timestamptz;
 alter table ideas add column if not exists deleted_at timestamptz;
 alter table important_info add column if not exists deleted_at timestamptz;
+alter table important_info add column if not exists youtube_url text;
 alter table comments add column if not exists deleted_at timestamptz;
 
 -- RLS activée : aucune policy publique. L'app utilise la clé "service_role"

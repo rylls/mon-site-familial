@@ -34,6 +34,12 @@ function compressImage(file, maxDim = 1600, quality = 0.82) {
   });
 }
 
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const match = url.trim().match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
 const RTE_COLORS = ['#3B2B1D', '#C1622D', '#6E8F57', '#5E84A6', '#E0A83E', '#C0453A'];
 const RTE_FONTS = [
   { label: 'Standard', value: 'Quicksand' },
@@ -414,8 +420,10 @@ function StatsCard({ bookings, mileageLogs, members }) {
 function ImportantInfoCard({ items, onItemsChange }) {
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [newYoutubeUrl, setNewYoutubeUrl] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
+  const [editYoutubeUrl, setEditYoutubeUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
   const [lightbox, setLightbox] = useState(null);
@@ -491,10 +499,11 @@ function ImportantInfoCard({ items, onItemsChange }) {
     setSaving(true);
     try {
       const body = newBodyRef.current?.getHTML() || '';
-      const updated = await addImportantInfo({ title: newTitle.trim(), body });
+      const updated = await addImportantInfo({ title: newTitle.trim(), body, youtube_url: newYoutubeUrl.trim() });
       onItemsChange(updated);
       showToast('Bloc ajouté');
       setNewTitle('');
+      setNewYoutubeUrl('');
       setAdding(false);
     } finally {
       setSaving(false);
@@ -507,7 +516,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
     setSaving(true);
     try {
       const body = editBodyRef.current?.getHTML() || '';
-      const updated = await updateImportantInfo(id, { title: editTitle.trim(), body });
+      const updated = await updateImportantInfo(id, { title: editTitle.trim(), body, youtube_url: editYoutubeUrl.trim() });
       onItemsChange(updated);
       showToast('Bloc modifié');
       setEditingId(null);
@@ -564,6 +573,12 @@ function ImportantInfoCard({ items, onItemsChange }) {
             onChange={(e) => setNewTitle(e.target.value)}
           />
           <RichTextEditor ref={newBodyRef} initialHtml="" />
+          <input
+            type="url"
+            placeholder="Lien vidéo YouTube (optionnel)"
+            value={newYoutubeUrl}
+            onChange={(e) => setNewYoutubeUrl(e.target.value)}
+          />
           <button className="btn small primary" disabled={!newTitle.trim() || saving} onClick={handleAddSave}>
             {saving ? '…' : 'Enregistrer'}
           </button>
@@ -592,6 +607,12 @@ function ImportantInfoCard({ items, onItemsChange }) {
                   onChange={(e) => setEditTitle(e.target.value)}
                 />
                 <RichTextEditor key={item.id} ref={editBodyRef} initialHtml={item.body || ''} />
+                <input
+                  type="url"
+                  placeholder="Lien vidéo YouTube (optionnel)"
+                  value={editYoutubeUrl}
+                  onChange={(e) => setEditYoutubeUrl(e.target.value)}
+                />
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button className="btn small primary" disabled={saving} onClick={() => handleEditSave(item.id)}>
                     {saving ? '…' : 'Enregistrer'}
@@ -627,6 +648,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
                       onClick={() => {
                         haptic.tap();
                         setEditTitle(item.title);
+                        setEditYoutubeUrl(item.youtube_url || '');
                         setEditingId(item.id);
                       }}
                     >
@@ -640,6 +662,17 @@ function ImportantInfoCard({ items, onItemsChange }) {
                     {item.body && (
                       <div className="info-block-body-box">
                         <div className="info-block-body" dangerouslySetInnerHTML={{ __html: item.body }} />
+                      </div>
+                    )}
+                    {extractYouTubeId(item.youtube_url) && (
+                      <div className="info-video-wrap">
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/${extractYouTubeId(item.youtube_url)}`}
+                          title={item.title}
+                          loading="lazy"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
                       </div>
                     )}
                     <div className="info-photo-row">

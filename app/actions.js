@@ -307,7 +307,7 @@ export async function getImportantInfo() {
   return [];
 }
 
-export async function addImportantInfo({ title, body }) {
+export async function addImportantInfo({ title, body, youtube_url }) {
   const { data: last } = await supabaseAdmin
     .from('important_info')
     .select('position')
@@ -316,15 +316,15 @@ export async function addImportantInfo({ title, body }) {
   const position = (last?.[0]?.position ?? -1) + 1;
   const { error } = await supabaseAdmin
     .from('important_info')
-    .insert({ title, body: body || null, position });
+    .insert({ title, body: body || null, youtube_url: youtube_url || null, position });
   if (error) throw error;
   return getImportantInfo();
 }
 
-export async function updateImportantInfo(id, { title, body }) {
+export async function updateImportantInfo(id, { title, body, youtube_url }) {
   const { error } = await supabaseAdmin
     .from('important_info')
-    .update({ title, body: body || null })
+    .update({ title, body: body || null, youtube_url: youtube_url || null })
     .eq('id', id);
   if (error) throw error;
   return getImportantInfo();
