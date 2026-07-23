@@ -21,6 +21,17 @@ import { buildActivity } from '../lib/activity';
 import { getMaintenanceStatus, STATUS_LABELS } from '../lib/maintenance';
 import { parseDate, startOfToday } from '../lib/dates';
 import { haptic } from '../lib/haptics';
+import { useRealtimeRefresh } from '../lib/useRealtimeRefresh';
+import {
+  getMembers,
+  getBookings,
+  getInventory,
+  getComments,
+  getMileageLogs,
+  getMaintenanceItems,
+  getImportantInfo,
+  getIdeas,
+} from '../actions';
 
 const COOKIE_NAME = 'van_profile';
 const LAST_SEEN_KEY = 'wouchi_last_seen';
@@ -67,6 +78,18 @@ function AppShellInner({
   useEffect(() => {
     setProfileId(readCookie(COOKIE_NAME));
   }, []);
+
+  // Synchro en direct : si un autre appareil ajoute/modifie/supprime une
+  // réservation, un objet d'inventaire, etc., on redemande juste la liste à
+  // jour plutôt que de forcer un rechargement de page.
+  useRealtimeRefresh('members', () => getMembers().then(setMembers));
+  useRealtimeRefresh('bookings', () => getBookings().then(setBookings));
+  useRealtimeRefresh('inventory_items', () => getInventory().then(setInventory));
+  useRealtimeRefresh('comments', () => getComments().then(setComments));
+  useRealtimeRefresh('mileage_logs', () => getMileageLogs().then(setMileageLogs));
+  useRealtimeRefresh('maintenance_items', () => getMaintenanceItems().then(setMaintenanceItems));
+  useRealtimeRefresh('important_info', () => getImportantInfo().then(setImportantInfo));
+  useRealtimeRefresh('ideas', () => getIdeas().then(setIdeas));
 
   const allActivity = buildActivity({ bookings, comments, inventory, members });
   const activity = activityClearedAt ? allActivity.filter((a) => a.timestamp > activityClearedAt) : allActivity;
