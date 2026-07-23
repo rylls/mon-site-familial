@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import Image from 'next/image';
 import Avatar from './Avatar';
 import { addImportantInfo, updateImportantInfo, deleteImportantInfo, restoreImportantInfo, uploadImportantInfoPhoto, reorderImportantInfo } from '../actions';
 import { parseDate, formatRange, startOfToday, fmtDate } from '../lib/dates';
@@ -315,7 +316,7 @@ function MaintenanceCard({ maintenanceItems, currentKm, onGoToTab }) {
     <div className="home-card maintenance-card" onClick={() => onGoToTab('entretien')}>
       <div className="home-card-title">Entretien</div>
       {withStatus.length === 0 ? (
-        <div className="maintenance-ok">✅ Rien à prévoir pour l'instant.</div>
+        <div className="maintenance-ok">✅ Rien à prévoir pour l&apos;instant.</div>
       ) : (
         <div className="maintenance-list">
           {withStatus.slice(0, 3).map(({ item, status }) => (
@@ -586,7 +587,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
       )}
 
       {items.length === 0 && !adding && (
-        <div className="empty-state">Rien pour l'instant. Ajoute des infos utiles pour la famille (comment ouvrir le toit, où est la clé du gaz…).</div>
+        <div className="empty-state">Rien pour l&apos;instant. Ajoute des infos utiles pour la famille (comment ouvrir le toit, où est la clé du gaz…).</div>
       )}
 
       <div ref={listRef}>
@@ -678,7 +679,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
                     <div className="info-photo-row">
                       {item.photo_url && (
                         <button type="button" className="info-photo-link" onClick={() => setLightbox(item.photo_url)}>
-                          <img src={item.photo_url} alt="" className="info-photo-thumb" />
+                          <Image src={item.photo_url} alt="" width={44} height={44} className="info-photo-thumb" />
                           <span>Voir la photo</span>
                         </button>
                       )}
@@ -704,6 +705,7 @@ function ImportantInfoCard({ items, onItemsChange }) {
 
       {lightbox && (
         <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- unknown aspect ratio per photo; next/image would need a guessed width/height and could distort it */}
           <img src={lightbox} alt="" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
           <button className="lightbox-close" onClick={() => setLightbox(null)} aria-label="Fermer">✕</button>
         </div>
@@ -758,7 +760,7 @@ export default function HomeView({
           <button className="btn small" onClick={() => onGoToTab('activite')}>Tout voir</button>
         )}
       </div>
-      {activity.length === 0 && <div className="empty-state">Rien à signaler pour l'instant.</div>}
+      {activity.length === 0 && <div className="empty-state">Rien à signaler pour l&apos;instant.</div>}
       {activity.slice(0, 4).map((a) => (
         <div key={a.id} className="activity-row">
           <Avatar member={a.member} size="sm" />

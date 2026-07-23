@@ -1,12 +1,12 @@
 'use client';
+import Image from 'next/image';
 import { ZONES } from './zones';
 
 export default function VanDiagram({ selectedZone, onSelectZone }) {
   return (
     <div className="van-diagram-card">
       <div className="van-image-wrap">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/van-cutaway.png" alt="Schéma en coupe du van Wouchi" />
+        <Image src="/images/van-cutaway.png" alt="Schéma en coupe du van Wouchi" width={1600} height={873} />
         {ZONES.map((z) => (
           <div
             key={z.id}

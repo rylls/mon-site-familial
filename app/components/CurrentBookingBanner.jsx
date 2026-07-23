@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import Avatar from './Avatar';
 import { parseDate, formatRange, startOfToday } from '../lib/dates';
 import { haptic } from '../lib/haptics';
@@ -23,7 +24,7 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
   if (trips.length === 0) {
     return (
       <div className="banner banner-none">
-        <img src="/images/van-banner.png" alt="" className="banner-none-van" />
+        <Image src="/images/van-banner.png" alt="" width={1600} height={1009} className="banner-none-van" />
         Aucun trajet en cours ou prévu. Réservez le van ci-dessous.
       </div>
     );
@@ -46,12 +47,12 @@ export default function CurrentBookingBanner({ bookings, members, onOpenTripEnd 
     <div className="banner" style={{ background: `linear-gradient(180deg, ${bannerColor || '#333'}, ${shade(bannerColor)})` }}>
       <div className="banner-van-strip">
         <div className="banner-van-wrap">
-          <img src="/images/van-banner.png" alt="" className="banner-van-img" />
+          <Image src="/images/van-banner.png" alt="" fill className="banner-van-img" priority />
           <div className="banner-wheel-pos rear">
-            <img src="/images/van-wheel.png" alt="" />
+            <Image src="/images/van-wheel.png" alt="" fill />
           </div>
           <div className="banner-wheel-pos front">
-            <img src="/images/van-wheel.png" alt="" />
+            <Image src="/images/van-wheel.png" alt="" fill />
           </div>
         </div>
       </div>
