@@ -21,6 +21,36 @@
   --shadow-lg:0 14px 34px rgba(59,38,17,0.16), 0 3px 10px rgba(59,38,17,0.08);
   --radius:22px;
   --radius-sm:15px;
+  --header-glass:rgba(242,230,208,0.82);
+  --overlay-glass:rgba(242,230,208,0.94);
+  --tabs-track:rgba(59,43,29,0.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --header-glass:rgba(20,15,10,0.82);
+    --overlay-glass:rgba(20,15,10,0.94);
+    --tabs-track:rgba(0,0,0,0.25);
+    --bg:#1C160F;
+    --bg-deep:#140F0A;
+    --card:#2A2116;
+    --card-soft:#241C13;
+    --ink:#F1E4CE;
+    --ink-soft:#C7B593;
+    --ink-faint:#8A7A5C;
+    --line:rgba(241,228,206,0.14);
+    --line-soft:rgba(241,228,206,0.08);
+    --accent:#E08349;
+    --sage:#8FB77E;
+    --dusk:#8AB2CE;
+    --mustard:#E8BE6E;
+    --rust:#E08349;
+    --vide:#E3806B;
+    --partiel:#E8BE6E;
+    --plein:#8FB77E;
+    --shadow-sm:0 1px 3px rgba(0,0,0,0.35), 0 1px 1px rgba(0,0,0,0.25);
+    --shadow-md:0 6px 18px rgba(0,0,0,0.4), 0 2px 5px rgba(0,0,0,0.3);
+    --shadow-lg:0 14px 34px rgba(0,0,0,0.5), 0 3px 10px rgba(0,0,0,0.35);
+  }
 }
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html,body{ margin:0; padding:0; overflow-x:hidden; }
@@ -81,7 +111,7 @@ input[type=text], input[type=date], input[type=password], .field{
   color:var(--ink);
   margin-bottom:10px;
 }
-input:focus, .field:focus{ outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 4px rgba(193,98,45,0.15); }
+input:focus, .field:focus{ outline:none; border-color:var(--accent); background:var(--card); box-shadow:0 0 0 4px rgba(193,98,45,0.15); }
 input::placeholder{ color:var(--ink-faint); }
 
 /* ---------- Mountain header band ---------- */
@@ -171,7 +201,7 @@ input::placeholder{ color:var(--ink-faint); }
   position:sticky;
   top:0;
   z-index:30;
-  background:rgba(242,230,208,0.82);
+  background:var(--header-glass);
   backdrop-filter:blur(18px) saturate(160%);
   -webkit-backdrop-filter:blur(18px) saturate(160%);
 }
@@ -422,7 +452,7 @@ input::placeholder{ color:var(--ink-faint); }
 /* ---------- Profile picker overlay ---------- */
 .overlay{
   position:fixed; inset:0;
-  background:rgba(242,230,208,0.94);
+  background:var(--overlay-glass);
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   display:flex; align-items:center; justify-content:center;
@@ -468,7 +498,7 @@ input::placeholder{ color:var(--ink-faint); }
   display:flex;
   gap:2px;
   margin:14px 0 20px;
-  background:rgba(59,43,29,0.08);
+  background:var(--tabs-track);
   border-radius:14px;
   padding:3px;
   position:sticky;
@@ -1557,4 +1587,24 @@ input::placeholder{ color:var(--ink-faint); }
   .tabs{ overflow-x:visible; }
   .tab{ flex:1 1 0; padding:9px 4px; }
   .tab-label{ display:none; }
+}
+
+/* ---------- Dark mode: text-color fixups ----------
+   Most of the app derives its colors from the --tokens above, which already
+   flip for dark automatically. A handful of small status labels sit on a
+   *translucent* tint (not a solid chip) and hardcode a dark text color meant
+   to read on a light card — on a dark card that same dark-on-dark text would
+   be close to unreadable, so they get an explicit lighter value here. Solid
+   light-background chips (e.g. .dash-alert-chip) aren't touched: their own
+   background never changes, so their contrast is already fine either way. */
+@media (prefers-color-scheme: dark){
+  .header-maint-pill{ color:var(--vide); }
+  .van-status-pill{ color:var(--sage); }
+  .van-status-pill.out{ color:var(--dusk); }
+  .van-status-pill.maintenance{ color:var(--ink-soft); }
+  .conflict-warning{ color:var(--vide); }
+  .ticket-conflict{ color:var(--vide); }
+  .ticket-maintenance .ticket-name{ color:var(--ink-soft); }
+  .level-label.partiel{ color:var(--partiel); }
+  .maintenance-disclaimer{ color:var(--mustard); }
 }
