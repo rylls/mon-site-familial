@@ -10,6 +10,29 @@ function isMissingDeletedAtColumn(error) {
   return error?.code === '42703' || /deleted_at/.test(error?.message || '');
 }
 
+// `buildQuery(filterDeletedAt)` doit renvoyer la requête Supabase déjà
+// ordonnée. Centralise le repli "colonne pas encore migrée" pour tous les
+// `get*` qui filtrent sur `deleted_at`, plutôt que de dupliquer le essai/repli
+// dans chaque fonction. `retries` permet d'absorber une erreur transitoire
+// (utilisé par getImportantInfo, qui a déjà connu des échecs intermittents).
+async function queryWithDeletedAtFallback(buildQuery, { retries = 1 } = {}) {
+  let lastError = null;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    let { data, error } = await buildQuery(true);
+    if (!error) return data;
+    if (isMissingDeletedAtColumn(error)) {
+      ({ data, error } = await buildQuery(false));
+      if (!error) return data;
+    }
+    lastError = error;
+    if (attempt < retries - 1) {
+      console.error(`Requête échouée (essai ${attempt + 1}/${retries}) :`, error.message);
+      await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 export async function getMembers() {
   const { data, error } = await supabaseAdmin.from('members').select('*').order('role', { ascending: false });
   if (error) throw error;
@@ -17,16 +40,11 @@ export async function getMembers() {
 }
 
 export async function getBookings() {
-  let { data, error } = await supabaseAdmin
-    .from('bookings')
-    .select('*')
-    .is('deleted_at', null)
-    .order('start_date', { ascending: true });
-  if (error && isMissingDeletedAtColumn(error)) {
-    ({ data, error } = await supabaseAdmin.from('bookings').select('*').order('start_date', { ascending: true }));
-  }
-  if (error) throw error;
-  return data;
+  return queryWithDeletedAtFallback((filterDeletedAt) => {
+    let q = supabaseAdmin.from('bookings').select('*');
+    if (filterDeletedAt) q = q.is('deleted_at', null);
+    return q.order('start_date', { ascending: true });
+  });
 }
 
 export async function addBooking({ member_id, start_date, end_date, note, type }) {
@@ -68,16 +86,11 @@ export async function ackTripEnd(id) {
 }
 
 export async function getInventory() {
-  let { data, error } = await supabaseAdmin
-    .from('inventory_items')
-    .select('*')
-    .is('deleted_at', null)
-    .order('zone', { ascending: true });
-  if (error && isMissingDeletedAtColumn(error)) {
-    ({ data, error } = await supabaseAdmin.from('inventory_items').select('*').order('zone', { ascending: true }));
-  }
-  if (error) throw error;
-  return data;
+  return queryWithDeletedAtFallback((filterDeletedAt) => {
+    let q = supabaseAdmin.from('inventory_items').select('*');
+    if (filterDeletedAt) q = q.is('deleted_at', null);
+    return q.order('zone', { ascending: true });
+  });
 }
 
 export async function updateInventoryLevel(id, level, updated_by) {
@@ -173,16 +186,11 @@ export async function deleteMember(id) {
 }
 
 export async function getComments() {
-  let { data, error } = await supabaseAdmin
-    .from('comments')
-    .select('*')
-    .is('deleted_at', null)
-    .order('created_at', { ascending: true });
-  if (error && isMissingDeletedAtColumn(error)) {
-    ({ data, error } = await supabaseAdmin.from('comments').select('*').order('created_at', { ascending: true }));
-  }
-  if (error) throw error;
-  return data;
+  return queryWithDeletedAtFallback((filterDeletedAt) => {
+    let q = supabaseAdmin.from('comments').select('*');
+    if (filterDeletedAt) q = q.is('deleted_at', null);
+    return q.order('created_at', { ascending: true });
+  });
 }
 
 export async function addComment({ target_type, target_id, member_id, text }) {
@@ -223,16 +231,11 @@ export async function addMileageLog({ km, recorded_by, recorded_at }) {
 }
 
 export async function getMaintenanceItems() {
-  let { data, error } = await supabaseAdmin
-    .from('maintenance_items')
-    .select('*')
-    .is('deleted_at', null)
-    .order('name', { ascending: true });
-  if (error && isMissingDeletedAtColumn(error)) {
-    ({ data, error } = await supabaseAdmin.from('maintenance_items').select('*').order('name', { ascending: true }));
-  }
-  if (error) throw error;
-  return data;
+  return queryWithDeletedAtFallback((filterDeletedAt) => {
+    let q = supabaseAdmin.from('maintenance_items').select('*');
+    if (filterDeletedAt) q = q.is('deleted_at', null);
+    return q.order('name', { ascending: true });
+  });
 }
 
 export async function updateMaintenanceItem(id, patch) {
@@ -289,22 +292,11 @@ export async function clearActivity() {
 }
 
 export async function getImportantInfo() {
-  let lastError = null;
-  let filterDeletedAt = true;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    let query = supabaseAdmin.from('important_info').select('*');
-    if (filterDeletedAt) query = query.is('deleted_at', null);
-    const { data, error } = await query
-      .order('position', { ascending: true })
-      .order('created_at', { ascending: true });
-    if (!error) return data;
-    lastError = error;
-    if (isMissingDeletedAtColumn(error)) filterDeletedAt = false;
-    console.error(`getImportantInfo attempt ${attempt + 1} failed:`, error.message);
-    if (attempt < 2) await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
-  }
-  console.error('getImportantInfo giving up after retries:', lastError?.message);
-  return [];
+  return queryWithDeletedAtFallback((filterDeletedAt) => {
+    let q = supabaseAdmin.from('important_info').select('*');
+    if (filterDeletedAt) q = q.is('deleted_at', null);
+    return q.order('position', { ascending: true }).order('created_at', { ascending: true });
+  }, { retries: 3 });
 }
 
 export async function addImportantInfo({ title, body, youtube_url }) {
@@ -348,16 +340,11 @@ export async function reorderImportantInfo(orderedIds) {
 }
 
 export async function getIdeas() {
-  const { data, error } = await supabaseAdmin
-    .from('ideas')
-    .select('*')
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
-  if (error) {
-    console.error('getIdeas failed (table missing? run schema.sql):', error.message);
-    return [];
-  }
-  return data;
+  return queryWithDeletedAtFallback((filterDeletedAt) => {
+    let q = supabaseAdmin.from('ideas').select('*');
+    if (filterDeletedAt) q = q.is('deleted_at', null);
+    return q.order('created_at', { ascending: false });
+  });
 }
 
 export async function addIdea({ member_id, text }) {
