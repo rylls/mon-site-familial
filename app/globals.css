@@ -761,11 +761,16 @@ input::placeholder{ color:var(--ink-faint); }
   margin-bottom:14px;
 }
 @media (min-width:900px){
-  /* Sur grand écran, les 4 cartes tiennent sur une seule ligne plutôt que de
-     rester en grille 2x2 avec chaque carte étirée sur toute la largeur
-     restante — ça évite l'effet "page mobile juste agrandie". */
-  .home-grid{ grid-template-columns:repeat(4, 1fr); }
   .wrap{ max-width:1300px; }
+}
+/* Les cartes au contenu court (voyage, météo) restent groupées 2 par ligne ;
+   les cartes plus riches (entretien, carnet de bord) prennent toute la
+   largeur pour que leur hauteur ne force plus les cartes voisines à
+   s'étirer et laisser du vide en dessous de leur contenu. */
+.maintenance-card,
+.anecdote-card,
+.stats-card{
+  grid-column:1 / -1;
 }
 .home-card{
   background:var(--card);
@@ -1558,7 +1563,10 @@ input::placeholder{ color:var(--ink-faint); }
 
 /* ---------- Side page doodles ---------- */
 .side-doodles{ display:none; }
-@media (min-width:1400px){
+@media (min-width:1580px){
+  /* .wrap peut atteindre 1300px de large (650px de son centre) ; les
+     doodles doivent rester au-delà de ce bord pour ne pas se retrouver
+     cachés sous les cartes. */
   .side-doodles{ display:block; }
   .side-doodles-col{
     position:fixed;
@@ -1570,8 +1578,8 @@ input::placeholder{ color:var(--ink-faint); }
     z-index:0;
     opacity:.4;
   }
-  .side-doodles-col.left{ left:calc(50% - 640px); }
-  .side-doodles-col.right{ right:calc(50% - 640px); }
+  .side-doodles-col.left{ left:calc(50% - 780px); }
+  .side-doodles-col.right{ right:calc(50% - 780px); }
   .side-doodle-item{ color:var(--ink); }
 }
 
