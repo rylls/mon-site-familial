@@ -73,13 +73,21 @@ export default function Calendar({ members, bookings, onBookingsChange, comments
   async function handleConfirm() {
     if (!start || !memberId) return;
     const wasEditing = !!editingId;
-    const updated = editingId
-      ? await editBooking(editingId, { start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note, type: bookingType })
-      : await addBooking({ member_id: memberId, start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note, type: bookingType });
-    haptic.success();
-    onBookingsChange(updated);
-    showToast(wasEditing ? 'Modifié' : bookingType === 'maintenance' ? 'Immobilisation ajoutée 🔧' : 'Trajet réservé 🚐');
-    clearSelection();
+    try {
+      const updated = editingId
+        ? await editBooking(editingId, { start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note, type: bookingType })
+        : await addBooking({ member_id: memberId, start_date: fmtDate(start), end_date: fmtDate(rangeEnd), note, type: bookingType });
+      haptic.success();
+      onBookingsChange(updated);
+      showToast(wasEditing ? 'Modifié' : bookingType === 'maintenance' ? 'Immobilisation ajoutée 🔧' : 'Trajet réservé 🚐');
+      clearSelection();
+    } catch (err) {
+      if (err?.code === '23P01') {
+        showToast('Ces dates chevauchent déjà un autre trajet — choisis une autre période.', { type: 'danger' });
+      } else {
+        showToast('Impossible d\'enregistrer ce trajet, réessaie.', { type: 'danger' });
+      }
+    }
   }
 
   async function handleDelete(id) {
