@@ -3,6 +3,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Avatar from './Avatar';
 import ProfilePicker from './ProfilePicker';
+import WelcomeScreen from './WelcomeScreen';
 import Calendar from './Calendar';
 import VanInventory from './VanInventory';
 import CurrentBookingBanner from './CurrentBookingBanner';
@@ -36,6 +37,7 @@ import {
 
 const COOKIE_NAME = 'van_profile';
 const LAST_SEEN_KEY = 'wouchi_last_seen';
+const WELCOMED_KEY = 'wouchi_welcomed';
 
 function readCookie(name) {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -60,6 +62,7 @@ function AppShellInner({
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab');
   const [profileId, setProfileId] = useState(undefined);
+  const [hasWelcomed, setHasWelcomed] = useState(undefined);
   const [tab, setTab] = useState(['accueil', 'calendrier', 'van', 'activite', 'entretien'].includes(urlTab) ? urlTab : 'accueil');
   const [members, setMembers] = useState(initialMembers);
   const [bookings, setBookings] = useState(initialBookings);
@@ -78,7 +81,13 @@ function AppShellInner({
 
   useEffect(() => {
     setProfileId(readCookie(COOKIE_NAME));
+    setHasWelcomed(!!localStorage.getItem(WELCOMED_KEY));
   }, []);
+
+  function dismissWelcome() {
+    localStorage.setItem(WELCOMED_KEY, '1');
+    setHasWelcomed(true);
+  }
 
   // Synchro en direct : si un autre appareil ajoute/modifie/supprime une
   // réservation, un objet d'inventaire, etc., on redemande juste la liste à
@@ -163,7 +172,7 @@ function AppShellInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activity.length]);
 
-  if (profileId === undefined) {
+  if (profileId === undefined || hasWelcomed === undefined) {
     return null;
   }
 
@@ -328,7 +337,11 @@ function AppShellInner({
         />
       )}
 
-      {!currentMember && <ProfilePicker members={members} onChoose={chooseProfile} />}
+      {!currentMember && (hasWelcomed ? (
+        <ProfilePicker members={members} onChoose={chooseProfile} />
+      ) : (
+        <WelcomeScreen onDismiss={dismissWelcome} />
+      ))}
       {settingsOpen && (
         <MemberSettings
           members={members}

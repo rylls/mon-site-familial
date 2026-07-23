@@ -471,6 +471,8 @@ input::placeholder{ color:var(--ink-faint); }
   color:var(--rust);
 }
 .picker-card p{ color:var(--ink-soft); margin:0 0 24px; font-size:14.5px; }
+.welcome-emoji{ font-size:52px; margin-bottom:6px; }
+.welcome-start-btn{ padding:12px 32px; font-size:15px; }
 .picker-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
