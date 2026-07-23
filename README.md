@@ -11,11 +11,17 @@ sur son icône pour se signaler — pas de mot de passe individuel.
 ## 1. Créer le projet Supabase
 
 1. Va sur https://supabase.com, crée un compte puis un nouveau projet.
-2. Une fois le projet créé, ouvre **SQL Editor > New query**, colle le
-   contenu du fichier `supabase/schema.sql` de ce dossier, et clique **Run**.
-   Cela crée les tables `members` (avec Dominique, Christine, Simon, Vincent
-   déjà remplis), `bookings` et `inventory_items` (avec le sel, l'eau, le gaz,
-   les ampoules, etc. déjà listés).
+2. Ouvre **SQL Editor > New query**, puis colle et exécute (**Run**) chaque
+   fichier de `supabase/migrations/` **dans l'ordre numérique** (`0001_...`,
+   `0002_...`, etc. — un fichier = une requête, l'un après l'autre). Cela crée
+   les tables `members` (avec Dominique, Christine, Simon, Vincent déjà
+   remplis), `bookings` et `inventory_items` (avec le sel, l'eau, le gaz, les
+   ampoules, etc. déjà listés), et applique toutes les évolutions ajoutées
+   depuis.
+3. Pour un projet Supabase qui existe déjà (mise à jour plutôt que création),
+   n'exécute que les fichiers de `supabase/migrations/` que tu n'as pas encore
+   lancés — chacun est numéroté et idempotent (relançable sans risque), donc
+   en cas de doute tu peux aussi tous les relancer depuis `0001_`.
 3. Va dans **Settings > API**. Note deux valeurs :
    - **Project URL**
    - **service_role secret** (clique sur "Reveal" — ⚠️ à garder secrète,
@@ -89,7 +95,9 @@ automatiquement le site.
 - `app/actions.js` — toutes les lectures/écritures Supabase (server actions)
 - `app/components/` — Calendrier, schéma du van, sélecteur de profil, etc.
 - `lib/supabaseAdmin.js` — client Supabase côté serveur uniquement
-- `supabase/schema.sql` — tables + données de départ à exécuter dans Supabase
+- `supabase/migrations/` — évolutions de la base, une par fichier numéroté, à
+  exécuter dans Supabase dans l'ordre ; toute nouvelle évolution s'ajoute ici
+  comme un nouveau fichier plutôt que de modifier les précédents
 
 ## Pour aller plus loin
 
